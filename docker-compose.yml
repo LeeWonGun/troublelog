@@ -2,9 +2,11 @@ services:
   mysql:
     image: mysql:8.0
     container_name: troublelog-mysql
+    restart: unless-stopped
     ports:
       - "3306:3306"
     environment:
+      TZ: Asia/Seoul
       MYSQL_DATABASE: troublelog
       MYSQL_USER: troublelog
       MYSQL_PASSWORD: troublelog
@@ -14,6 +16,7 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
 
 volumes:
   troublelog-mysql-data:
