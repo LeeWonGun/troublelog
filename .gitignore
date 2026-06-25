@@ -1,0 +1,44 @@
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+**/bin/
+
+# VS Code
+.vscode/
+
+# Java / Spring
+**/target/
+*.class
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env
+!*.env.example
+
+# Spring secret config
+**/application-secret.properties
+**/application-local-secret.properties
+**/application-prod.properties
+
+# Upload files
+uploads/
+**/uploads/
+
+# React / Node
+**/node_modules/
+**/dist/
+**/build/
