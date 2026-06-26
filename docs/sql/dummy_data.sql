@@ -2,6 +2,9 @@
 -- File: docs/sql/dummy_data.sql
 -- Purpose: Local development / API test / Frontend screen test
 
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 -- 주의:
 -- 이 파일은 개발/테스트용 더미 데이터입니다.
 -- 실행할 때마다 기존 테스트 데이터를 삭제하고 다시 삽입합니다.
@@ -29,11 +32,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO users
 (id, email, password_hash, nickname, auth_provider, provider_id, delflag, created_at, updated_at)
 VALUES
-    (1, '[leader@example.com](mailto:leader@example.com)', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'leaderUser', 'LOCAL', NULL, 'N', NOW(), NULL),
-    (2, '[backend@example.com](mailto:backend@example.com)', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'backendDev', 'LOCAL', NULL, 'N', NOW(), NULL),
-    (3, '[frontend@example.com](mailto:frontend@example.com)', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'frontendDev', 'LOCAL', NULL, 'N', NOW(), NULL),
-    (4, '[googleuser@gmail.com](mailto:googleuser@gmail.com)', NULL, 'userA7K9Q2LM', 'GOOGLE', 'google-provider-id-001', 'N', NOW(), NULL),
-    (5, '[outsider@example.com](mailto:outsider@example.com)', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'outsideUser', 'LOCAL', NULL, 'N', NOW(), NULL);
+    (1, 'leader@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'leaderUser', 'LOCAL', NULL, 'N', NOW(), NULL),
+    (2, 'backend@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'backendDev', 'LOCAL', NULL, 'N', NOW(), NULL),
+    (3, 'frontend@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'frontendDev', 'LOCAL', NULL, 'N', NOW(), NULL),
+    (4, 'googleuser@gmail.com', NULL, 'userA7K9Q2LM', 'GOOGLE', 'google-provider-id-001', 'N', NOW(), NULL),
+    (5, 'outsider@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'outsideUser', 'LOCAL', NULL, 'N', NOW(), NULL);
 
 -- =========================================================
 -- 2. teams
@@ -57,12 +60,14 @@ VALUES
     (2, 2, 1, 'MEMBER', NOW(), NULL, 'N'),
     (3, 3, 1, 'MEMBER', NOW(), NULL, 'N'),
 
+
     (4, 1, 2, 'LEADER', NOW(), NULL, 'N'),
     (5, 3, 2, 'MEMBER', NOW(), NULL, 'N'),
     (6, 4, 2, 'MEMBER', NOW(), NULL, 'N'),
 
     (7, 5, 1, 'MEMBER', DATE_SUB(NOW(), INTERVAL 3 DAY), NOW(), 'Y'),
     (8, 1, 3, 'LEADER', NOW(), NULL, 'Y');
+
 
 -- =========================================================
 -- 4. questions
@@ -72,12 +77,13 @@ INSERT INTO questions
 (id, writer_id, team_id, accepted_answer_id, title, content, error_message, environment, tried, visibility, status, answer_count, view_count, like_count, delflag, created_at, updated_at)
 VALUES
     (1, 1, NULL, NULL,
-     'Spring Boot 서버 실행 시 8080 포트 충돌 문제',
-     'Spring Boot 서버를 실행하려고 하는데 8080 포트가 이미 사용 중이라는 오류가 발생합니다. 어떤 프로세스가 포트를 사용 중인지 확인하고 종료하는 방법이 궁금합니다.',
-     'Port 8080 was already in use',
-     'Windows 11, Java 21, Spring Boot 4, IntelliJ',
-     'netstat으로 포트를 확인해보려고 했지만 어떤 프로세스를 종료해야 하는지 모르겠습니다.',
-     'PUBLIC', 'UNSOLVED', 0, 24, 0, 'N', DATE_SUB(NOW(), INTERVAL 5 DAY), NULL),
+    'Spring Boot 서버 실행 시 8080 포트 충돌 문제',
+    'Spring Boot 서버를 실행하려고 하는데 8080 포트가 이미 사용 중이라는 오류가 발생합니다. 어떤 프로세스가 포트를 사용 중인지 확인하고 종료하는 방법이 궁금합니다.',
+    'Port 8080 was already in use',
+    'Windows 11, Java 21, Spring Boot 4, IntelliJ',
+    'netstat으로 포트를 확인해보려고 했지만 어떤 프로세스를 종료해야 하는지 모르겠습니다.',
+    'PUBLIC', 'UNSOLVED', 0, 24, 0, 'N', DATE_SUB(NOW(), INTERVAL 5 DAY), NULL),
+
 
     (2, 2, 1, NULL,
      'Docker Compose MySQL 연결 실패',
@@ -127,6 +133,7 @@ VALUES
      'None',
      'PUBLIC', 'UNSOLVED', 0, 0, 0, 'Y', DATE_SUB(NOW(), INTERVAL 10 DAY), NULL);
 
+
 -- =========================================================
 -- 5. answers
 -- =========================================================
@@ -135,8 +142,9 @@ INSERT INTO answers
 (id, question_id, writer_id, parent_answer_id, depth, content, like_count, delflag, created_at, updated_at)
 VALUES
     (1, 1, 2, NULL, 0,
-     'Windows에서는 netstat -ano | findstr :8080 명령어로 8080 포트를 사용 중인 PID를 확인할 수 있습니다.',
-     0, 'N', DATE_SUB(NOW(), INTERVAL 5 DAY), NULL),
+    'Windows에서는 netstat -ano | findstr :8080 명령어로 8080 포트를 사용 중인 PID를 확인할 수 있습니다.',
+    0, 'N', DATE_SUB(NOW(), INTERVAL 5 DAY), NULL),
+
 
     (2, 1, 1, 1, 1,
      'PID를 확인한 다음에는 어떻게 종료하면 될까요?',
@@ -173,6 +181,7 @@ VALUES
     (10, 1, 5, NULL, 0,
      '삭제된 답변 테스트 데이터입니다.',
      0, 'Y', DATE_SUB(NOW(), INTERVAL 8 DAY), NULL);
+
 
 -- =========================================================
 -- 6. accepted answer
@@ -250,12 +259,14 @@ VALUES
     (6, 3, 4, 'QUE', NOW()),
     (7, 5, 4, 'QUE', NOW()),
 
+
     (8, 1, 1, 'ANS', NOW()),
     (9, 3, 1, 'ANS', NOW()),
     (10, 1, 4, 'ANS', NOW()),
     (11, 2, 6, 'ANS', NOW()),
     (12, 3, 6, 'ANS', NOW()),
     (13, 2, 9, 'ANS', NOW());
+
 
 -- =========================================================
 -- 11. like_count 업데이트
@@ -266,8 +277,8 @@ SET like_count = (
     SELECT COUNT(*)
     FROM likes l
     WHERE l.target_type = 'QUE'
-      AND l.target_id = q.id
-);
+    AND l.target_id = q.id
+    );
 
 UPDATE answers a
 SET like_count = (
