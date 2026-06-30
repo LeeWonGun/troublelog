@@ -17,7 +17,7 @@ export const APP = {
   // API 연동
   SET_USER:                'APP/SET_USER',    // 로그인 사용자 정보 세팅
   SET_TEAMS:               'APP/SET_TEAMS',   // 팀 목록 세팅
-  SET_LOADING:             'APP/SET_LOADING', // 전역 로딩 (초기 인증 체크)
+  SET_GLOBAL_LOADING:      'APP/SET_GLOBAL_LOADING', // axios 요청 진행 중 전역 로딩 오버레이
 }
 
 export const QLIST = {
@@ -37,7 +37,6 @@ export const QDETAIL = {
   // API 연동
   SET_QUESTION:       'QDETAIL/SET_QUESTION',
   SET_ANSWERS:        'QDETAIL/SET_ANSWERS',
-  SET_LOADING:        'QDETAIL/SET_LOADING',
   SET_ERROR:          'QDETAIL/SET_ERROR',
 }
 
@@ -56,7 +55,6 @@ export const MYPAGE = {
 
   // API 연동
   SET_DATA:    'MYPAGE/SET_DATA',
-  SET_LOADING: 'MYPAGE/SET_LOADING',
   SET_ERROR:   'MYPAGE/SET_ERROR',
 }
 

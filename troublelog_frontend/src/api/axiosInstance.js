@@ -9,8 +9,27 @@ const axiosInstance = axios.create({
   withCredentials: true,
 })
 
+let _onLoadingChange = null
+let _activeRequests = 0
+
+export const registerLoadingCallback = (cb) => {
+  _onLoadingChange = cb       // 외부에서 넘긴 함수를 여기 저장
+}
+
+const incrementLoading = () => {
+  _activeRequests++
+  _onLoadingChange?.(true)    // 저장된 함수를 여기서 실행
+}
+
+const decrementLoading = () => {
+  _activeRequests = Math.max(0, _activeRequests - 1)
+  if (_activeRequests === 0) _onLoadingChange?.(false)
+}
+
 axiosInstance.interceptors.request.use(
   (config) => {
+    incrementLoading()
+
     const fullUrl = typeof window !== "undefined"
       ? new URL(axios.getUri(config), window.location.origin).toString()
       : axios.getUri(config);
@@ -25,6 +44,8 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
+    decrementLoading()
+    
     console.log("[request error]", error);
     return Promise.reject(error);
   }
@@ -32,11 +53,15 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    decrementLoading()
+
     console.log("[response]", res.data);
 
     return res.data;
   },
   (error) => {
+    decrementLoading()
+
     console.log("[response error]", err);
     if (error.response?.status === 401) {
       window.location.href = '/login'

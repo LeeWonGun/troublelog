@@ -22,7 +22,6 @@ function HomePage() {
   const navigate = useNavigate()
   const [popularPosts, setPopularPosts] = useState([])
   const [publicPosts, setPublicPosts] = useState([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchHome = async () => {
@@ -37,15 +36,11 @@ function HomePage() {
         setPublicPosts(publicRes?.content ?? [])
       } catch (e) {
         console.error('홈 데이터 로드 실패', e)
-      } finally {
-        setLoading(false)
       }
     }
 
     fetchHome()
   }, [])
-
-  if (loading) return <div className="main" />
 
   return (
     <div className="main">

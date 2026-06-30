@@ -8,7 +8,7 @@ export const initialState = {
   email: null,
   authProvider: null,  // 'LOCAL' | 'GOOGLE'
   userSince: null,
-  loading: true,       // 초기 인증 체크 완료 전 true
+  globalLoading: false, // axios 요청 진행 중 오버레이 표시 여부
 
   teams: [],
   teamListOpen: true,
@@ -26,8 +26,8 @@ export const initialState = {
 
 const appReducer = (state, action) => {
   switch (action.type) {
-    case APP.SET_LOADING:
-      return { ...state, loading: action.payload }
+    case APP.SET_GLOBAL_LOADING:
+      return { ...state, globalLoading: action.payload }
 
     case APP.SET_USER:
       return {
@@ -37,14 +37,12 @@ const appReducer = (state, action) => {
         email: action.payload.email,
         authProvider: action.payload.authProvider,
         userSince: action.payload.userSince ?? null,
-        loading: false,
       }
 
     // 로그아웃 시 사용자 정보 초기화
     case APP.CLEAR_USER:
       return {
         ...initialState,
-        loading: false,
       }
 
     case APP.SET_TEAMS:

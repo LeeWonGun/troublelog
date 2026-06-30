@@ -47,7 +47,7 @@ function Sidebar() {
         <>
           <div className="user-pill">
             <div>
-              <div className="name">{'😀비회원님'}</div>
+              <div className="name">{'😀 비회원님'}</div>
             </div>
           </div>
           <button className="btn btn-primary btn-block" onClick={() => navigate('/login')}>

@@ -15,9 +15,6 @@ export const initialState = {
 
 const questionListReducer = (state, action) => {
   switch (action.type) {
-    case QLIST.SET_LOADING:
-      return { ...state, loading: action.payload, error: null }
-
     case QLIST.SET_ERROR:
       return { ...state, loading: false, error: action.payload }
 
