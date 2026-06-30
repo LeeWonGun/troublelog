@@ -53,4 +53,26 @@ public record QuestionListResponse(
                 question.getCreatedAt()
         );
     }
+
+    /**
+     * MyBatis 검색 결과 Row와 기술 스택 목록을 질문 목록 응답 DTO로 변환한다.
+     */
+    public static QuestionListResponse fromSearchRow(
+            QuestionSearchRow row,
+            List<TechStackResponse> techStacks
+    ) {
+        return new QuestionListResponse(
+                row.questionId(),
+                row.title(),
+                row.writerId(),
+                row.writerNickname(),
+                row.status(),
+                row.visibility(),
+                row.answerCount(),
+                row.likeCount(),
+                row.viewCount(),
+                techStacks,
+                row.createdAt()
+        );
+    }
 }
