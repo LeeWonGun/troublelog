@@ -103,5 +103,46 @@ public class AnswerService {
 		return reply.getId();
 	}
 	
+	
+	// 답변/댓글/대댓글 계층 조회
+	public List<AnswerResponse> getAnswers(Long questionId, Long userId) {
+		
+		int accessible = answerMapper.countAccessibleQuestion(questionId, userId);
+		
+		if(accessible == 0) {
+			throw new BusinessException("질문을 찾을 수 없거나 접근 권한이 없습니다", ErrorCode.QUESTION_NOT_FOUND);
+		}
+		
+		List<AnswerResponse> all = answerMapper.findAnswersByQuestionId(questionId);
+		
+		// parentAnswerId 기준으로 자식들을 미리 그룹핑해둔다.
+		Map<Long, List<AnswerResponse>> childrenByParent = all.stream()
+				.filter(a -> a.getParentAnswerId() != null)
+				.collect(Collectors.groupingBy(AnswerResponse::getParentAnswerId));
+		
+		// depth = 0(답변)만 최상위로 두고, 나머지는 재귀적으로 children에 붙인다.
+		return all.stream()
+				.filter(a -> a.getDepth() == 0)
+				.map(answer -> attachChildren(answer, childrenByParent))
+				.collect(Collectors.toList());
+		
+	}
+	
+	
+	/* 
+	 * 부모-자식 관계를 재귀적으로 타고 내려가며 children을 채운다. 
+	 * depth는 0~2로 제한되어 있지만, 트리 구성 로직 자체는 깊이에 의존하지 않는 범용 방식으로 작성했다. 
+	 */
+	private AnswerResponse attachChildren(AnswerResponse answer, Map<Long, List<AnswerResponse>> childrenByParent) {
+		
+		List<AnswerResponse> children = childrenByParent.getOrDefault(answer.getId(), List.of())
+				.stream()
+				.map(child -> attachChildren(child, childrenByParent)) // 형제들 하나씩 다 처리
+				.collect(Collectors.toList());
+		
+		answer.setChildren(children);
+		
+		return answer;
+	}
 
 }

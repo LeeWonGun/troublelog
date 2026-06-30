@@ -70,4 +70,18 @@ public class AnswerController {
 	}
 	
 	
+	
+	// 답변/댓글/대댓글 계층 조회
+	@GetMapping("/api/questions/{questionId}/answers")
+	public ApiResponse<List<AnswerResponse>> getAnswers(@PathVariable Long questionId) {
+		
+		// TODO: JWT 인증 구현 후 현재 로그인 사용자 ID를 SecurityContext에서 가져오도록 수정
+		Long userId = 1L;
+		
+		List<AnswerResponse> answers = answerService.getAnswers(questionId, userId);
+		
+		return ApiResponse.success("조회가 완료되었습니다.", answers);
+		
+	}
+
 }

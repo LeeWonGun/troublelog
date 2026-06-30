@@ -1,10 +1,12 @@
 package com.min.edu.answer.repository;
 
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.min.edu.answer.AnswerEntity;
+import com.min.edu.answer.dto.AnswerResponse;
 
 @Mapper
 public interface AnswerMapper {
@@ -20,4 +22,9 @@ public interface AnswerMapper {
 	 */
 	int insertCommentOrReply(AnswerEntity answer);
 	
+	// 질문이 존재하고, PUBLIC이거나 TEAM이면서 요청자가 팀원인 경우에만 1을 반환한다.
+	int countAccessibleQuestion(@Param("questionId") Long questionId, @Param("userId") Long userId);
+	
+	// 질문에 달린 답변/댓글/대댓글을 평면 리스트로 가져온다. (트리 구성은 Service에서 처리)
+	List<AnswerResponse> findAnswersByQuestionId(@Param("questionId") Long questionId);
 }
