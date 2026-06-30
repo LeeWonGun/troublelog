@@ -76,5 +76,31 @@
 	    ORDER BY a.depth ASC, a.created_at ASC
 	</select>
 	
+	
+	<!--
+	 작성자 본인이고, 삭제되지 않았고,
+	 TEAM 질문이면 현재도 팀원인 경우에만 수정을 허용한다.
+	 (탈퇴한 팀원은 더 이상 수정할 수 없다)
+	-->
+	<update id="updateContent">
+		UPDATE answers a
+	    JOIN questions q ON a.question_id = q.id
+	    SET a.content = #{content}, a.updated_at = NOW()
+	    WHERE a.id = #{id}
+	      AND a.writer_id = #{writerId}
+	      AND a.delflag = 'N'
+	      AND (q.visibility = 'PUBLIC'
+	           OR (q.visibility = 'TEAM' AND EXISTS (
+	               SELECT 1 FROM team_members tm
+	               WHERE tm.team_id = q.team_id AND tm.user_id = #{writerId} AND tm.delflag = 'N')))
+	</update>
+	
+	<select id="isAcceptedAnswer" resultType="boolean">
+		SELECT EXISTS (
+	        SELECT 1 FROM questions q
+	        WHERE q.accepted_answer_id = #{answerId}
+	    )
+	</select>
+	
 
 </mapper>

@@ -144,5 +144,77 @@ public class AnswerService {
 		
 		return answer;
 	}
+	
+	
+	// 답변/댓글/대댓글 수정
+	@Transactional
+	public void updateContent(Long id, Long writerId, String content) {
+		
+		AnswerEntity answer = answerMapper.findAnswerById(id);
+		
+		if(answer == null) {
+			throw new BusinessException("답변을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		if(!answer.getWriterId().equals(writerId)) {
+			throw new BusinessException("작성자만 수정할 수 있습니다", ErrorCode.FORBIDDEN);
+		}
+		
+		// 내용이 바뀌지 않았다면 불필요한 갱신(updated_at 변경)을 막기 위해 그대로 종료한다.
+		if(content.equals(answer.getContent())) {
+			return;
+		}
+		
+		/*
+		 * 최상위 답변(depth=0)까지 거슬러 올라가서, 그 답변이 채택되었는지 확인한다.
+		 * 채택된 답변뿐 아니라 그 아래 댓글/대댓글도 함께 수정을 제한한다.
+		 */
+		Long rootAnswerId = findRootAnswerId(answer);
+		boolean isAccepted = answerMapper.isAcceptedAnswer(rootAnswerId);
+		
+		if(isAccepted) {
+			throw new BusinessException("채택된 답변과 그에 달린 댓글/대댓글은 수정할 수 없습니다", ErrorCode.ACCEPTED_ANSWER_CANNOT_DELETE);
+		}
+		
+		int updated = answerMapper.updateContent(id, writerId, content);
+		
+		if(updated == 0) {
+			throw new BusinessException("내용을 수정할 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+	}
+	
 
+	/* 
+	 * depth=0(최상위 답변)에 도달할 때까지 부모를 따라 올라간다.
+	 * 부모 삭제 시 자식도 함께 삭제되는 정책이므로, 자식이 살아있다면 부모도 항상 살아있다. 
+	 */
+	private Long findRootAnswerId(AnswerEntity answer) {
+		
+		if(answer.getDepth() == 0) {
+			return answer.getId();
+		}
+		
+		AnswerEntity parent = answerMapper.findAnswerById(answer.getParentAnswerId());
+		
+		if(parent == null) {
+			// 정상적으로는 발생할 수 없는 상태 (연쇄 삭제 정책 위반 시에만 발생)
+			throw new BusinessException("답변 구조에 문제가 있습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		return findRootAnswerId(parent);
+	}
+	
+	
+	
 }
+
+
+
+
+
+
+
+
+
+
+

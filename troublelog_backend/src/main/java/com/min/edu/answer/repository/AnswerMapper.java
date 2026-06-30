@@ -22,9 +22,17 @@ public interface AnswerMapper {
 	 */
 	int insertCommentOrReply(AnswerEntity answer);
 	
+	
 	// 질문이 존재하고, PUBLIC이거나 TEAM이면서 요청자가 팀원인 경우에만 1을 반환한다.
 	int countAccessibleQuestion(@Param("questionId") Long questionId, @Param("userId") Long userId);
 	
 	// 질문에 달린 답변/댓글/대댓글을 평면 리스트로 가져온다. (트리 구성은 Service에서 처리)
 	List<AnswerResponse> findAnswersByQuestionId(@Param("questionId") Long questionId);
+	
+	
+	// 답변/댓글/대댓글 수정: 작성자 본인이고, 삭제되지 않았고, TEAM이면 현재도 팀원인 경우에만 허용한다.
+	int updateContent(@Param("id") Long id, @Param("writerId") Long writerId, @Param("content") String content);
+	
+	// questions.accepted_answer_id가 이 답변 id와 일치하는지 확인한다.
+	boolean isAcceptedAnswer(@Param("answerId") Long answerId);
 }
