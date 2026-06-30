@@ -5,11 +5,19 @@ import com.min.edu.techstack.dto.response.TechStackResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// 질문 상세 화면에서 질문 본문 영역을 보여주기 위한 응답 DTO
 public record QuestionDetailResponse(
         Long questionId,
         String title,
+
+        // questions.content에 저장된 Markdown 문자열에서 상황 설명만 분리한 값이다.
         String content,
+
+        // Markdown 코드블록의 언어 태그 값이다. 코드가 없으면 null이다.
+        String codeLanguage,
+
+        // Markdown 코드블록 안의 코드 내용이다. 코드가 없으면 null이다.
+        String code,
+
         String errorMessage,
         String environment,
         String tried,
