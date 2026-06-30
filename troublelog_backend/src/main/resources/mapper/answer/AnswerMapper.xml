@@ -4,6 +4,13 @@
     "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.min.edu.answer.repository.AnswerMapper">
 
+	<select id="findAnswerById" resultType="com.min.edu.answer.AnswerEntity">
+		SELECT id, question_id, writer_id, parent_answer_id, depth, content,
+       			like_count, delflag, created_at, updated_at
+		FROM answers
+		WHERE id = #{id} AND delflag = 'N'
+	</select>
+	
 	<!--
 	 PUBLIC 질문은 누구나 답변할 수 있지만,
 	 TEAM 질문은 해당 팀의 활성 팀원만 답변할 수 있다.
@@ -20,4 +27,24 @@
 	               WHERE tm.team_id = q.team_id AND tm.user_id = #{writerId} AND tm.delflag = 'N')))
     </insert>
 	
+	<!--
+	 부모(답변 또는 댓글)의 depth + 1을 그대로 저장한다.
+	 depth < 2 조건으로 대댓글(depth=2) 아래에는 댓글을 달 수 없도록 제한한다.
+	-->
+	<insert id="insertCommentOrReply" parameterType="com.min.edu.answer.AnswerEntity" 
+			useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO answers (question_id, writer_id, parent_answer_id, depth, content, like_count, delflag, created_at)
+	    SELECT a.question_id, #{writerId}, a.id, a.depth + 1, #{content}, 0, 'N', NOW()
+	    FROM answers a
+	    JOIN questions q ON a.question_id = q.id
+	    WHERE a.id = #{parentAnswerId} AND a.delflag = 'N' AND a.depth &lt; 2
+	      AND q.delflag = 'N'
+	      AND (q.visibility = 'PUBLIC'
+	           OR (q.visibility = 'TEAM' AND EXISTS (
+	               SELECT 1 FROM team_members tm
+	               WHERE tm.team_id = q.team_id AND tm.user_id = #{writerId} AND tm.delflag = 'N')))
+	</insert>
+	
+	
+
 </mapper>

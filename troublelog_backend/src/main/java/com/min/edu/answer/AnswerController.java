@@ -38,4 +38,36 @@ public class AnswerController {
 	}
 	
 	
+	// 댓글 작성
+	@PostMapping("/api/answers/{answerId}/comments")
+	public ApiResponse<Long> createComment(
+			@PathVariable Long answerId,
+			@Valid @RequestBody AnswerCreateRequest request
+	) {
+		// TODO: JWT 인증 구현 후 현재 로그인 사용자 ID를 SecurityContext에서 가져오도록 수정
+		Long writerId = 1L;
+		
+		Long commentId = answerService.createComment(answerId, writerId, request);
+		
+		return ApiResponse.success("댓글이 작성되었습니다.", commentId);
+		
+	}
+	
+	
+	// 대댓글 작성
+	@PostMapping("/api/answers/{answerId}/replies")
+	public ApiResponse<Long> createReply(
+			@PathVariable Long answerId,
+			@Valid @RequestBody AnswerCreateRequest request
+	) {
+		
+		// TODO: JWT 인증 구현 후 현재 로그인 사용자 ID를 SecurityContext에서 가져오도록 수정
+		Long writerId = 1L;
+		
+		Long replyId = answerService.createReply(answerId, writerId, request);
+		
+		return ApiResponse.success("대댓글이 작성되었습니다.", replyId);
+	}
+	
+	
 }

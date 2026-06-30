@@ -43,5 +43,65 @@ public class AnswerService {
 	}
 	
 	
+	// 댓글 작성 (depth = 1, 부모는 반드시 답변이어야 한다)
+	@Transactional
+	public Long createComment(Long parentAnswerId, Long writerId, AnswerCreateRequest request) {
+		
+		AnswerEntity parent = answerMapper.findAnswerById(parentAnswerId);
+		
+		if(parent == null) {
+			throw new BusinessException("답변을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		if(parent.getDepth() != 0) {
+			throw new BusinessException("답변에만 댓글을 작성할 수 있습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		AnswerEntity comment = AnswerEntity.builder()
+				.parentAnswerId(parentAnswerId)
+				.writerId(writerId)
+				.content(request.getContent())
+				.build();
+		
+		int inserted = answerMapper.insertCommentOrReply(comment);
+		
+		if(inserted == 0) {
+			// 부모가 조회 이후 동시에 삭제된 경우 (동시성 최종 방어선)
+			throw new BusinessException("답변을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		return comment.getId();
+	}
+	
+	
+	// 대댓글 작성 (depth = 2, 부모는 반드시 댓글이어야 한다)
+	@Transactional
+	public Long createReply(Long parentAnswerId, Long writerId, AnswerCreateRequest request) {
+		
+		AnswerEntity parent = answerMapper.findAnswerById(parentAnswerId);
+		
+		if(parent == null) {
+			throw new BusinessException("댓글을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		if(parent.getDepth() != 1) {
+			throw new BusinessException("댓글에만 대댓글을 작성할 수 있습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		AnswerEntity reply = AnswerEntity.builder()
+				.parentAnswerId(parentAnswerId)
+				.writerId(writerId)
+				.content(request.getContent())
+				.build();
+		
+		int inserted = answerMapper.insertCommentOrReply(reply);
+		
+		if(inserted == 0) {
+			throw new BusinessException("댓글을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		return reply.getId();
+	}
+	
 
 }
