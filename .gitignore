@@ -9,6 +9,10 @@ out/
 .settings/
 **/bin/
 
+# DBeaver / IDE local metadata
+troublelog_backend/.dbeaver/
+troublelog_backend/.metadata/
+
 # VS Code
 .vscode/
 
