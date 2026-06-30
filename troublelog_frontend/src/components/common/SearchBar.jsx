@@ -1,11 +1,11 @@
 import { useAppContext } from '../../context/AppContext.jsx'
 import { APP } from '../../constants/actionTypes.js'
+import { MODAL } from '../../constants/modalTypes.js'
 
 function getActiveFilterCount(state) {
-  const stackCount = Object.values(state.searchStackToggles).filter(Boolean).length
+  const stackCount  = Object.values(state.searchStackToggles).filter(Boolean).length
   const statusCount = state.searchStatus !== 'all' ? 1 : 0
-  const imageCount = state.searchHasImage ? 1 : 0
-  return stackCount + statusCount + imageCount
+  return stackCount + statusCount
 }
 
 function SearchBar({ placeholder = '에러 메시지, 키워드로 검색해보세요', onSearch }) {
@@ -26,7 +26,7 @@ function SearchBar({ placeholder = '에러 메시지, 키워드로 검색해보�
       </div>
       <button
         className={`btn btn-ghost btn-detail-search ${filterCount > 0 ? 'has-filters' : ''}`}
-        onClick={() => dispatch({ type: APP.OPEN_MODAL, payload: { modal: 'search-detail' } })}
+        onClick={() => dispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.SEARCH_DETAIL } })}
       >
         상세 검색
         {filterCount > 0 && <span className="filter-count">{filterCount}</span>}

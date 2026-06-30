@@ -1,6 +1,7 @@
 import { useReducer } from 'react'
 import { useAppContext } from '../context/AppContext.jsx'
 import { APP, MYPAGE } from '../constants/actionTypes.js'
+import { MODAL } from '../constants/modalTypes.js'
 import Pagination from '../components/common/Pagination.jsx'
 import myPageReducer, { initialState } from '../reducers/myPageReducer.js'
 import { MOCK_MY_QUESTIONS, MOCK_MY_ANSWERS, MOCK_MY_COMMENTS } from '../constants/mockData.js'
@@ -36,26 +37,19 @@ function MyPage() {
           <h1>마이페이지</h1>
           <span className="since">가입일: {appState.userSince}</span>
         </div>
-        <div className="nickname-row">
-          <span className="nickname-label">닉네임</span>
-          <span className="nickname-value">{appState.nickname}</span>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: 'edit-nickname' } })}
-          >
-            닉네임 변경
-          </button>
-        </div>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.EDIT_PROFILE } })}
+        >
+          정보 수정
+        </button>
       </div>
 
-      {/* page-head--tight: margin-bottom 10px */}
       <div className="page-head page-head--tight">
-        {/* page-head__title--sm: font-size 14px */}
-        <h1 className="page-head__title--sm">내 활동</h1>
+        <h1 className="page-head__title--sm">내 질문 조회</h1>
       </div>
 
       <div className="panel">
-        {/* auth-tabs--mb: margin-bottom 14px */}
         <div className="auth-tabs auth-tabs--mb">
           {[
             ['questions', '내 질문',  MOCK_MY_QUESTIONS.length],
@@ -72,10 +66,6 @@ function MyPage() {
           ))}
         </div>
 
-        {/*
-          mini-list--fixed: height 315px (댓글 5행 기준) + overflow hidden
-          패딩 행 불필요 — 고정 높이 컨테이너가 빈 공간을 자동으로 처리
-        */}
         <div className="mini-list mini-list--fixed">
           {shown.length === 0 && (
             <div className="mini-empty">{EMPTY_MSG[activeTab]}</div>
@@ -117,7 +107,6 @@ function MyPage() {
         />
       </div>
 
-      {/* page-head--mt: margin-top 22px */}
       <div className="page-head page-head--mt">
         <h1>내 팀 관리</h1>
       </div>
@@ -126,19 +115,22 @@ function MyPage() {
           <div key={t.id} className="team-manage-row">
             <div>
               {t.name}
-              <span className={`role-tag ${t.role === '팀장' ? 'leader' : 'member'}`}>{t.role}</span>
+              <span className={`role-tag ${t.role === 'leader' ? 'leader' : 'member'}`}>
+                {t.role === 'leader' ? '팀장' : '팀원'}
+              </span>
             </div>
-            {t.role === '팀장' ? (
+            {t.role === 'leader' ? (
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: 'team-manage', teamId: t.id } })}
+                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.TEAM_MANAGE, teamId: t.id } })}
               >
                 관리
               </button>
             ) : (
+              /* 탈퇴 버튼: 목업 기준 btn-danger (빨간 테두리) */
               <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: 'leave-confirm', teamId: t.id } })}
+                className="btn btn-danger btn-sm"
+                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.LEAVE_CONFIRM, teamId: t.id } })}
               >
                 탈퇴
               </button>

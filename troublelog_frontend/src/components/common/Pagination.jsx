@@ -1,4 +1,3 @@
-// compact: 마이페이지처럼 패널 내부에 위치할 때 상단 구분선 + 여백 적용
 function Pagination({ current, total, onChange, compact = false }) {
   if (total <= 1) return null
 

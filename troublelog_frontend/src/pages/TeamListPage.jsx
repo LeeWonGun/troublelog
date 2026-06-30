@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext.jsx'
 import { APP } from '../constants/actionTypes.js'
+import { MODAL } from '../constants/modalTypes.js'
 
 function TeamListPage() {
   const navigate = useNavigate()
@@ -34,10 +35,10 @@ function TeamListPage() {
         {/* team-action-row: flex + gap 8px + margin-top 16px */}
         <div className="team-action-row">
           {/* btn-flex: flex 1 */}
-          <button className="btn btn-ghost btn-flex" onClick={() => dispatch({ type: APP.OPEN_MODAL, payload: { modal: 'create-team' } })}>
+          <button className="btn btn-ghost btn-flex" onClick={() => dispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.CREATE_TEAM } })}>
             팀 생성
           </button>
-          <button className="btn btn-ghost btn-flex" onClick={() => dispatch({ type: APP.OPEN_MODAL, payload: { modal: 'join-team' } })}>
+          <button className="btn btn-ghost btn-flex" onClick={() => dispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.JOIN_TEAM } })}>
             팀 참여
           </button>
         </div>

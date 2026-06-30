@@ -11,8 +11,8 @@ export const APP = {
   SET_SEARCH_KEYWORD:      'APP/SET_SEARCH_KEYWORD',
   TOGGLE_SEARCH_STACK:     'APP/TOGGLE_SEARCH_STACK',
   SET_SEARCH_STATUS:       'APP/SET_SEARCH_STATUS',
-  TOGGLE_SEARCH_HAS_IMAGE: 'APP/TOGGLE_SEARCH_HAS_IMAGE',
   RESET_SEARCH_FILTERS:    'APP/RESET_SEARCH_FILTERS',
+  CLEAR_USER:              'APP/CLEAR_USER',  // 로그아웃 시 사용자 정보 초기화
 
   // API 연동
   SET_USER:                'APP/SET_USER',    // 로그인 사용자 정보 세팅
@@ -26,11 +26,6 @@ export const QLIST = {
   SET_STATUS_FILTER: 'QLIST/SET_STATUS_FILTER',
   RESET_FILTERS:     'QLIST/RESET_FILTERS',
   SET_PAGE:          'QLIST/SET_PAGE',
-
-  // API 연동
-  SET_USER:                'APP/SET_USER',
-  SET_TEAMS:               'APP/SET_TEAMS',
-  SET_LOADING:             'APP/SET_LOADING',
 }
 
 export const QDETAIL = {
@@ -40,8 +35,8 @@ export const QDETAIL = {
   SET_COMMENT_INPUT:  'QDETAIL/SET_COMMENT_INPUT',
 
   // API 연동
-  SET_QUESTION:       'QDETAIL/SET_QUESTION', // 질문 상세 데이터
-  SET_ANSWERS:        'QDETAIL/SET_ANSWERS',  // 답변 목록 (좋아요 여부 포함)
+  SET_QUESTION:       'QDETAIL/SET_QUESTION',
+  SET_ANSWERS:        'QDETAIL/SET_ANSWERS',
   SET_LOADING:        'QDETAIL/SET_LOADING',
   SET_ERROR:          'QDETAIL/SET_ERROR',
 }
@@ -60,7 +55,19 @@ export const MYPAGE = {
   SET_PAGE: 'MYPAGE/SET_PAGE',
 
   // API 연동
-  SET_DATA:    'MYPAGE/SET_DATA',    // { questions, answers, comments }
+  SET_DATA:    'MYPAGE/SET_DATA',
   SET_LOADING: 'MYPAGE/SET_LOADING',
   SET_ERROR:   'MYPAGE/SET_ERROR',
+}
+
+export const LOGIN = {
+  SET_FIELD: 'LOGIN/SET_FIELD',
+  SET_ERROR: 'LOGIN/SET_ERROR',
+}
+
+export const SIGNUP = {
+  SET_FIELD:    'SIGNUP/SET_FIELD',
+  SET_ERROR:    'SIGNUP/SET_ERROR',
+  SHOW_CODE:    'SIGNUP/SHOW_CODE',    // 이메일 인증 코드 입력 섹션 표시
+  SET_VERIFIED: 'SIGNUP/SET_VERIFIED', // 이메일 인증 완료 여부 세팅
 }

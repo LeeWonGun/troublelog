@@ -7,7 +7,6 @@ import Pagination from '../components/common/Pagination.jsx'
 import questionListReducer, { initialState } from '../reducers/questionListReducer.js'
 import { MOCK_BOARD_POSTS } from '../constants/mockData.js'
 
-const FILTER_TAGS = ['JAVA', 'React', 'Docker', 'Spring', 'Next.js']
 const PAGE_SIZE = 5
 
 function QuestionListPage() {
@@ -17,14 +16,9 @@ function QuestionListPage() {
 
   const teamInfo = teams.find(t => t.id === activeTeam)
 
+  // 정렬 및 상태 필터는 sort-row 에서 처리
   const filtered = MOCK_BOARD_POSTS
     .filter(p => activeTeam ? p.team === activeTeam : p.visibility === 'PUBLIC')
-    .filter(p => {
-      if (state.filterStatus === 'solved') return p.solved
-      if (state.filterStatus === 'unsolved') return !p.solved
-      return true
-    })
-    .filter(p => state.filterTags.length === 0 || state.filterTags.some(t => p.tags.includes(t)))
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((state.currentPage - 1) * PAGE_SIZE, state.currentPage * PAGE_SIZE)
@@ -40,27 +34,7 @@ function QuestionListPage() {
         </h1>
       </div>
 
-      <div className="filter-bar">
-        {[['all', '전체'], ['solved', '해결됨'], ['unsolved', '미해결']].map(([val, label]) => (
-          <span
-            key={val}
-            className={`filter-pill ${state.filterStatus === val ? 'active' : ''}`}
-            onClick={() => dispatch({ type: QLIST.SET_STATUS_FILTER, payload: val })}
-          >
-            {label}
-          </span>
-        ))}
-        {FILTER_TAGS.map(tag => (
-          <span
-            key={tag}
-            className={`filter-pill ${state.filterTags.includes(tag) ? 'active' : ''}`}
-            onClick={() => dispatch({ type: QLIST.TOGGLE_TAG_FILTER, payload: tag })}
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
-
+      {/* sort-row: 목업 기준 정렬/상태 필터 (filter-bar pill UI 는 목업에 없으므로 제거) */}
       <div className="sort-row">
         {[['latest', '최신순'], ['popular', '인기순'], ['solved', '해결된 글'], ['unsolved', '미해결 글']].map(([val, label]) => (
           <span
