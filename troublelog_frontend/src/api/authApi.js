@@ -19,6 +19,11 @@ export const logout = () =>
 export const getMe = () => 
     axiosInstance.get('/api/auth/me')
 
+// TODO: 임시로 사용. 실제 api 확인 필요
+// GET /api/auth/email?email=xxx - 이메일 중복 확인
+export const authEmail = (email) => 
+    axiosInstance.get('/api/auth/email', { params: { email } })
+
 // GET /api/auth/check-email?email=xxx - 이메일 중복 확인
 export const checkEmail = (email) => 
     axiosInstance.get('/api/auth/check-email', { params: { email } })

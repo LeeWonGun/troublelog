@@ -68,4 +68,12 @@ export const SIGNUP = {
   SET_ERROR:    'SIGNUP/SET_ERROR',
   SHOW_CODE:    'SIGNUP/SHOW_CODE',    // 이메일 인증 코드 입력 섹션 표시
   SET_VERIFIED: 'SIGNUP/SET_VERIFIED', // 이메일 인증 완료 여부 세팅
+  SET_NICKNAME_CHECKED: 'SIGNUP/SET_NICKNAME_CHECKED',
+}
+
+export const CHANGE_PASS = {
+  SET_FIELD:    'CHANGE_PASS/SET_FIELD',
+  SET_ERROR:    'CHANGE_PASS/SET_ERROR',
+  SHOW_CODE:    'CHANGE_PASS/SHOW_CODE',    // 이메일 인증 코드 입력 섹션 표시
+  SET_VERIFIED: 'CHANGE_PASS/SET_VERIFIED', // 이메일 인증 완료 여부 세팅
 }

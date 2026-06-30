@@ -1,10 +1,14 @@
 import { useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CHANGE_PASS } from '../constants/actionTypes'
+import { authEmail } from '../api/authApi'
+import { updatePassword } from '../api/userApi'
 
 const initialState = {
   email: '',
   emailCode: '',
   showCodeSection: false, // 인증 코드 입력 섹션 표시 여부
+  emailVerified: false,    // 이메일 인증 완료 여부
   newPassword: '',
   newPasswordConfirm: '',
   emailError: '',
@@ -14,48 +18,66 @@ const initialState = {
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'SET_FIELD':
-      return { ...state, [action.field]: action.value, emailError: '', passwordError: '', error: '' }
-    case 'SET_EMAIL_ERROR':
-      return { ...state, emailError: action.payload }
-    case 'SET_PASSWORD_ERROR':
-      return { ...state, passwordError: action.payload }
-    case 'SET_ERROR':
+    case CHANGE_PASS.SET_FIELD: {
+      const base = { ...state, error: '', [action.field]: action.value, }
+
+      // 이메일이 바뀌면 인증 상태 초기화 (재인증 필요)
+      if (action.field === 'email') {
+        return { ...base, emailVerified: false, showCodeSection: false }
+      }
+
+      return base
+    }
+    case CHANGE_PASS.SET_ERROR:
       return { ...state, error: action.payload }
-    case 'SHOW_CODE':
+    case CHANGE_PASS.SHOW_CODE:
       return { ...state, showCodeSection: true }
     default:
       return state
   }
 }
 
-/**
- * P-FE-LI-15 비밀번호 재설정 페이지
- * 로그인 페이지의 "비밀번호를 잊었습니다." 링크에서 진입
- */
 function ResetPasswordPage() {
   const navigate = useNavigate()
   const [state, dispatch] = useReducer(reducer, initialState)
   const set = field => e => dispatch({ type: 'SET_FIELD', field, value: e.target.value })
 
   // 이메일 인증 코드 발송 요청
-  function handleSendCode() {
+  async function handleSendCode() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(state.email)) {
-      dispatch({ type: 'SET_EMAIL_ERROR', payload: '이메일 형식이 아닙니다.' })
+      dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'emailError', value: '올바른 이메일 형식으로 입력하세요.' })
       return
     }
-    // TODO: API 연동 - axiosInstance.post('/auth/password-reset/send-code', { email: state.email })
-    dispatch({ type: 'SHOW_CODE' })
+
+    try {
+      const res = await authEmail({ userId: state.email, password: state.password })
+      if (res.success) {
+        dispatch({ type: CHANGE_PASS.SHOW_CODE })
+      } else {
+        dispatch({ type: CHANGE_PASS.SET_ERROR, payload: res.message })
+      }
+    } catch {
+      dispatch({ type: CHANGE_PASS.SET_ERROR, payload: '이메일 인증 중 에러가 발생했습니다.' })
+    }
   }
 
   async function handleResetPassword() {
     if (state.newPassword !== state.newPasswordConfirm) {
-      dispatch({ type: 'SET_PASSWORD_ERROR', payload: '비밀번호 확인이 일치하지 않습니다.' })
+      dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'passwordError', value: '비밀번호 확인이 일치하지 않습니다.' })
       return
     }
-    // TODO: API 연동 - axiosInstance.post('/auth/password-reset/confirm', { email, code, newPassword })
-    navigate('/login')
+
+    try {
+      const res = await updatePassword({ password: state.password })
+      if (res.success) {
+        navigate('/login')
+      } else {
+        dispatch({ type: CHANGE_PASS.SET_ERROR, payload: res.message })
+      }
+    } catch {
+      dispatch({ type: CHANGE_PASS.SET_ERROR, payload: '비밀번호 변경 중 에러가 발생했습니다.' })
+    }
   }
 
   return (
@@ -66,7 +88,7 @@ function ResetPasswordPage() {
         </div>
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18 }}>비밀번호 변경</div>
 
-        {/* ① 이메일 입력 + 인증 요청 */}
+        {/* 이메일 입력 + 인증 요청 */}
         <div className="form-group">
           <label>아이디 (이메일 형식)</label>
           <div className="input-row">
@@ -82,7 +104,7 @@ function ResetPasswordPage() {
           {state.emailError && <div className="error-msg">{state.emailError}</div>}
         </div>
 
-        {/* ② 인증 코드 입력 — 인증 요청 후 노출 */}
+        {/* 인증 코드 입력 — 인증 요청 후 노출 */}
         {state.showCodeSection && (
           <div className="form-group">
             <label>이메일 인증 코드</label>
@@ -98,7 +120,7 @@ function ResetPasswordPage() {
           </div>
         )}
 
-        {/* ③ 새 비밀번호 */}
+        {/* 새 비밀번호 */}
         <div className="form-group">
           <label>새 비밀번호</label>
           <input
@@ -111,7 +133,7 @@ function ResetPasswordPage() {
           <div className="hint">* 8자 이상, 영문+숫자+특수문자 조합</div>
         </div>
 
-        {/* ④ 새 비밀번호 확인 */}
+        {/* 새 비밀번호 확인 */}
         <div className="form-group">
           <label>새 비밀번호 확인</label>
           <input

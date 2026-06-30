@@ -125,6 +125,7 @@ input, textarea, select { font-family: inherit; }
 .btn-danger { background: transparent; color: var(--danger); border-color: #4A2424; }
 .btn-danger:hover { background: rgba(255, 107, 107, 0.08); }
 .btn-sm { padding: 6px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
 /* ---------- Nav ---------- */
 .nav-section { display: flex; flex-direction: column; gap: 2px; }
@@ -321,6 +322,12 @@ input, textarea, select { font-family: inherit; }
 .textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 .input-row { display: flex; gap: 8px; }
 .input-row .input { flex: 1; }
+/* 유효성 에러 상태 인풋 테두리 */
+.input--error { border-color: var(--danger) !important; }
+.input--error:focus { border-color: var(--danger) !important; }
+
+/* 인풋 하단 에러 메시지 */
+.error-msg { font-size: 12px; color: var(--danger); margin-top: 5px; }
 .radio-row { display: flex; gap: 20px; align-items: center; }
 .radio-opt { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text-secondary); cursor: pointer; }
 .radio-opt input { accent-color: var(--blue); }

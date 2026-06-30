@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { LOGIN } from '../constants/actionTypes.js'
 import { login } from '../api/authApi.js'
 
-const initialState = { email: '', password: '', error: '' }
+const initialState = { id: '', password: '', error: '' }
 
 function reducer(state, action) {
   switch (action.type) {
@@ -21,8 +21,8 @@ function LoginPage() {
     dispatch({ type: LOGIN.SET_FIELD, field, value: e.target.value })
 
   async function handleLogin() {
-    if (!state.email) {
-      dispatch({ type: LOGIN.SET_ERROR, payload: '이메일을 입력해 주세요' })
+    if (!state.id) {
+      dispatch({ type: LOGIN.SET_ERROR, payload: '아이디를 입력해 주세요' })
       return
     }
     if (!state.password) {
@@ -31,11 +31,16 @@ function LoginPage() {
     }
 
     try {
-      await login({ userId: state.email, password: state.password })
+      await login({ userId: state.id, password: state.password })
       navigate('/')
     } catch {
       dispatch({ type: LOGIN.SET_ERROR, payload: '이메일 또는 비밀번호가 올바르지 않습니다.' })
     }
+  }
+
+  async function handleGoogleLogin() {
+    let baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    window.location.href = `${baseUrl}/oauth2/authorization/google`
   }
 
   return (
@@ -53,9 +58,9 @@ function LoginPage() {
 
         <div className="form-group">
           <input
-            className="input" type="email" placeholder="이메일 입력"
-            value={state.email}
-            onChange={set('email')}
+            className="input" type="email" placeholder="아이디 입력"
+            value={state.id}
+            onChange={set('id')}
           />
         </div>
         <div className="form-group">
@@ -70,7 +75,7 @@ function LoginPage() {
         <button className="btn btn-primary btn-block" onClick={handleLogin}>로그인</button>
 
         <div className="auth-divider">간편 로그인</div>
-        <button className="btn-social">
+        <button className="btn-social" onClick={handleGoogleLogin}>
           <svg width="16" height="16" viewBox="0 0 48 48">
             <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8 3l5.7-5.7C34.5 6 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" />
             <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 16 18.9 13 24 13c3.1 0 5.9 1.1 8 3l5.7-5.7C34.5 6 29.5 4 24 4c-7.7 0-14.3 4.4-17.7 10.7z" />
@@ -80,7 +85,6 @@ function LoginPage() {
           Google 로그인
         </button>
 
-        {/* 비밀번호 찾기 링크 (P-FE-LI-00) */}
         <div className="auth-links">
           <button onClick={() => navigate('/reset-password')}>비밀번호를 잊었습니다.</button>
         </div>
