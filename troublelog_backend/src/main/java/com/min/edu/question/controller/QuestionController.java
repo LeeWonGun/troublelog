@@ -1,6 +1,7 @@
 package com.min.edu.question.controller;
 
 import com.min.edu.common.response.ApiResponse;
+import com.min.edu.question.dto.request.QuestionSearchCondition;
 import com.min.edu.question.dto.response.QuestionDetailResponse;
 import com.min.edu.question.dto.response.QuestionListResponse;
 import com.min.edu.question.service.QuestionService;
@@ -26,6 +27,35 @@ public class QuestionController {
         return ApiResponse.success(
                 "공개 질문 목록 조회 성공",
                 questionService.getPublicQuestions()
+        );
+    }
+
+    /**
+     * 공개 질문을 검색한다.
+     *
+     * 요청 예:
+     * /api/questions/search?keyword=Spring
+     * /api/questions/search?status=UNSOLVED
+     * /api/questions/search?techStackIds=1&techStackIds=2
+     * /api/questions/search?sort=popular
+     */
+    @GetMapping("/api/questions/search")
+    public ApiResponse<List<QuestionListResponse>> searchPublicQuestions(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) List<Long> techStackIds,
+            @RequestParam(required = false) String sort
+    ) {
+        QuestionSearchCondition condition = new QuestionSearchCondition(
+                keyword,
+                status,
+                techStackIds,
+                sort
+        );
+
+        return ApiResponse.success(
+                "공개 질문 검색 성공",
+                questionService.searchPublicQuestions(condition)
         );
     }
 

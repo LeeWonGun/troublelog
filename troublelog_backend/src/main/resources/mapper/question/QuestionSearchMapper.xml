@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.min.edu.question.mapper.QuestionSearchMapper">
+
+    <!--
+        공개 질문 검색 쿼리이다.
+
+        검색 조건:
+        - keyword: 제목 또는 본문 검색
+        - status: UNSOLVED 또는 SOLVED
+        - techStackIds: 선택된 기술 스택 중 하나라도 연결된 질문 검색
+        - sort: latest 또는 popular
+
+        현재 User 구조가 확정되지 않았으므로 writerNickname은 null로 내려준다.
+        용혁님 인증/회원 PR merge 후 users 테이블과 JOIN하여 채울 수 있다.
+    -->
+    <select id="searchPublicQuestions"
+            resultType="com.min.edu.question.dto.response.QuestionSearchRow">
+
+        SELECT
+        q.id AS questionId,
+        q.title AS title,
+        q.writer_id AS writerId,
+        NULL AS writerNickname,
+        q.status AS status,
+        q.visibility AS visibility,
+        q.answer_count AS answerCount,
+        q.like_count AS likeCount,
+        q.view_count AS viewCount,
+        q.created_at AS createdAt
+        FROM questions q
+        WHERE q.visibility = 'PUBLIC'
+        AND q.delflag = 'N'
+
+        <if test="keyword != null and keyword != ''">
+            AND (
+            LOWER(q.title) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+            OR LOWER(q.content) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+            )
+        </if>
+
+        <if test="status != null and status != ''">
+            AND q.status = #{status}
+        </if>
+
+        <if test="techStackIds != null and techStackIds.size() > 0">
+            AND EXISTS (
+            SELECT 1
+            FROM question_tech_stacks qts
+            WHERE qts.question_id = q.id
+            AND qts.tech_stack_id IN
+            <foreach collection="techStackIds" item="techStackId" open="(" separator="," close=")">
+                #{techStackId}
+            </foreach>
+            )
+        </if>
+
+        <choose>
+            <when test="sort == 'popular'">
+                ORDER BY q.like_count DESC, q.created_at DESC
+            </when>
+            <otherwise>
+                ORDER BY q.created_at DESC
+            </otherwise>
+        </choose>
+
+    </select>
+
+</mapper>
