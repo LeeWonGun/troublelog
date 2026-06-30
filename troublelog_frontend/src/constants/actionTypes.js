@@ -1,0 +1,66 @@
+// 리듀서별 action type 상수 - string literal 오타 방지 및 중앙 관리
+export const APP = {
+  SET_NICKNAME:            'APP/SET_NICKNAME',
+  TOGGLE_TEAM_LIST:        'APP/TOGGLE_TEAM_LIST',
+  SET_ACTIVE_TEAM:         'APP/SET_ACTIVE_TEAM',
+  OPEN_MODAL:              'APP/OPEN_MODAL',
+  CLOSE_MODAL:             'APP/CLOSE_MODAL',
+  ADD_TEAM:                'APP/ADD_TEAM',
+  REMOVE_TEAM:             'APP/REMOVE_TEAM',
+  LEAVE_TEAM:              'APP/LEAVE_TEAM',
+  SET_SEARCH_KEYWORD:      'APP/SET_SEARCH_KEYWORD',
+  TOGGLE_SEARCH_STACK:     'APP/TOGGLE_SEARCH_STACK',
+  SET_SEARCH_STATUS:       'APP/SET_SEARCH_STATUS',
+  TOGGLE_SEARCH_HAS_IMAGE: 'APP/TOGGLE_SEARCH_HAS_IMAGE',
+  RESET_SEARCH_FILTERS:    'APP/RESET_SEARCH_FILTERS',
+
+  // API 연동
+  SET_USER:                'APP/SET_USER',    // 로그인 사용자 정보 세팅
+  SET_TEAMS:               'APP/SET_TEAMS',   // 팀 목록 세팅
+  SET_LOADING:             'APP/SET_LOADING', // 전역 로딩 (초기 인증 체크)
+}
+
+export const QLIST = {
+  SET_SORT:          'QLIST/SET_SORT',
+  TOGGLE_TAG_FILTER: 'QLIST/TOGGLE_TAG_FILTER',
+  SET_STATUS_FILTER: 'QLIST/SET_STATUS_FILTER',
+  RESET_FILTERS:     'QLIST/RESET_FILTERS',
+  SET_PAGE:          'QLIST/SET_PAGE',
+
+  // API 연동
+  SET_USER:                'APP/SET_USER',
+  SET_TEAMS:               'APP/SET_TEAMS',
+  SET_LOADING:             'APP/SET_LOADING',
+}
+
+export const QDETAIL = {
+  TOGGLE_POST_LIKE:   'QDETAIL/TOGGLE_POST_LIKE',
+  ACCEPT_ANSWER:      'QDETAIL/ACCEPT_ANSWER',
+  TOGGLE_ANSWER_LIKE: 'QDETAIL/TOGGLE_ANSWER_LIKE',
+  SET_COMMENT_INPUT:  'QDETAIL/SET_COMMENT_INPUT',
+
+  // API 연동
+  SET_QUESTION:       'QDETAIL/SET_QUESTION', // 질문 상세 데이터
+  SET_ANSWERS:        'QDETAIL/SET_ANSWERS',  // 답변 목록 (좋아요 여부 포함)
+  SET_LOADING:        'QDETAIL/SET_LOADING',
+  SET_ERROR:          'QDETAIL/SET_ERROR',
+}
+
+export const WRITE = {
+  SET_FIELD:     'WRITE/SET_FIELD',
+  SET_VISIBILITY:'WRITE/SET_VISIBILITY',
+  TOGGLE_STACK:  'WRITE/TOGGLE_STACK',
+  ADD_IMAGE:     'WRITE/ADD_IMAGE',
+  REMOVE_IMAGE:  'WRITE/REMOVE_IMAGE',
+  RESET:         'WRITE/RESET',
+}
+
+export const MYPAGE = {
+  SET_TAB:  'MYPAGE/SET_TAB',
+  SET_PAGE: 'MYPAGE/SET_PAGE',
+
+  // API 연동
+  SET_DATA:    'MYPAGE/SET_DATA',    // { questions, answers, comments }
+  SET_LOADING: 'MYPAGE/SET_LOADING',
+  SET_ERROR:   'MYPAGE/SET_ERROR',
+}
