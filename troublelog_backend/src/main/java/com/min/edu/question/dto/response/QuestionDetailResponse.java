@@ -5,6 +5,7 @@ import com.min.edu.techstack.dto.response.TechStackResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// 질문 상세 화면에서 질문 본문 영역을 보여주기 위한 응답 DTO
 public record QuestionDetailResponse(
         Long questionId,
         String title,

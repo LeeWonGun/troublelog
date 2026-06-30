@@ -2,6 +2,7 @@ package com.min.edu.question.dto.request;
 
 import java.util.List;
 
+// 검색 조건을 Service로 넘기기 위해 묶어둔 조건 DTO
 public record QuestionSearchCondition(
         // 제목 또는 내용 검색에 사용한다.
         String keyword,

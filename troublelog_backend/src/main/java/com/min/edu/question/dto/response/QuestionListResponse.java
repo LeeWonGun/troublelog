@@ -5,6 +5,7 @@ import com.min.edu.techstack.dto.response.TechStackResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
+// 질문 목록 화면에서 질문 카드 하나를 표현하는 응답 DTO
 public record QuestionListResponse(
         Long questionId,
         String title,

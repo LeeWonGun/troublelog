@@ -2,6 +2,7 @@ package com.min.edu.question.dto.request;
 
 import java.util.List;
 
+// 질문 작성 요청을 받을 때 사용하는 DTO
 public record QuestionCreateRequest(
         String title,
         String content,
