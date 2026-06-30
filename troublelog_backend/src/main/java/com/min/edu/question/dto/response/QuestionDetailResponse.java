@@ -1,10 +1,15 @@
 package com.min.edu.question.dto.response;
 
+import com.min.edu.question.entity.Question;
+import com.min.edu.question.util.QuestionContentParts;
 import com.min.edu.techstack.dto.response.TechStackResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * 질문 상세 화면의 질문 본문 영역을 표현하는 응답 DTO이다.
+ */
 public record QuestionDetailResponse(
         Long questionId,
         String title,
@@ -49,4 +54,39 @@ public record QuestionDetailResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
+
+    /**
+     * Question Entity와 content 분리 결과, 기술 스택 목록을 질문 상세 응답 DTO로 변환한다.
+     *
+     * writerNickname, teamName은 회원/팀 구조가 확정된 뒤 연결한다.
+     */
+    public static QuestionDetailResponse from(
+            Question question,
+            QuestionContentParts contentParts,
+            List<TechStackResponse> techStacks
+    ) {
+        return new QuestionDetailResponse(
+                question.getId(),
+                question.getTitle(),
+                contentParts.content(),
+                contentParts.codeLanguage(),
+                contentParts.code(),
+                question.getErrorMessage(),
+                question.getEnvironment(),
+                question.getTried(),
+                question.getWriterId(),
+                null,
+                question.getTeamId(),
+                null,
+                question.getStatus(),
+                question.getVisibility(),
+                question.getAnswerCount(),
+                question.getLikeCount(),
+                question.getViewCount(),
+                question.getAcceptedAnswerId(),
+                techStacks,
+                question.getCreatedAt(),
+                question.getUpdatedAt()
+        );
+    }
 }

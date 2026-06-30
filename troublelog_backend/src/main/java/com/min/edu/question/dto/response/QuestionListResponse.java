@@ -1,11 +1,14 @@
 package com.min.edu.question.dto.response;
 
+import com.min.edu.question.entity.Question;
 import com.min.edu.techstack.dto.response.TechStackResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-// 질문 목록 화면에서 질문 카드 하나를 표현하는 응답 DTO
+/**
+ * 질문 목록 화면에서 질문 카드 하나를 표현하는 응답 DTO이다.
+ */
 public record QuestionListResponse(
         Long questionId,
         String title,
@@ -26,4 +29,28 @@ public record QuestionListResponse(
         List<TechStackResponse> techStacks,
         LocalDateTime createdAt
 ) {
+
+    /**
+     * Question Entity와 기술 스택 목록을 질문 목록 응답 DTO로 변환한다.
+     *
+     * writerNickname은 인증/회원 구조가 확정된 뒤 User 정보와 연결해서 채운다.
+     */
+    public static QuestionListResponse from(
+            Question question,
+            List<TechStackResponse> techStacks
+    ) {
+        return new QuestionListResponse(
+                question.getId(),
+                question.getTitle(),
+                question.getWriterId(),
+                null,
+                question.getStatus(),
+                question.getVisibility(),
+                question.getAnswerCount(),
+                question.getLikeCount(),
+                question.getViewCount(),
+                techStacks,
+                question.getCreatedAt()
+        );
+    }
 }
