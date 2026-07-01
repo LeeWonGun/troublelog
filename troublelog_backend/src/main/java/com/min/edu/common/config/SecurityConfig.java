@@ -77,6 +77,7 @@ public class SecurityConfig {
                                 "/api/questions/popular",
                                 "/api/questions/search",
                                 "/api/questions/*",
+                                "/api/questions/*/answers",
                                 "/api/tech-stacks"
                         ).permitAll()
                         
