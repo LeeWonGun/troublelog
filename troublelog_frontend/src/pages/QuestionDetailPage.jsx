@@ -57,7 +57,7 @@ function QuestionDetailPage() {
   const { state: appState } = useAppContext()
   const [state, dispatch] = useReducer(questionDetailReducer, initialState)
 
-   // 질문 상세 조회 - 라우트 파라미터(id)가 바뀔 때마다 재조회
+  // 질문 상세 조회 - 라우트 파라미터(id)가 바뀔 때마다 재조회
   useEffect(() => {
     let ignore = false // 응답이 늦게 도착했을 때 이전 요청 결과로 state를 덮어쓰지 않기 위한 가드
 
@@ -158,7 +158,7 @@ function QuestionDetailPage() {
             {state.liked ? '♥' : '♡'} 좋아요 {state.likeCount}
           </button>
           <div style={{ display: 'flex', gap: 8 }}>
-            
+
             {isAuthor && (
               <button
                 className="btn btn-ghost btn-sm"
@@ -192,7 +192,7 @@ function QuestionDetailPage() {
                   className={`icon-btn ${isLiked ? 'liked' : ''}`}
                   onClick={() => dispatch({ type: QDETAIL.TOGGLE_ANSWER_LIKE, payload: a.id })}
                 >
-                  {isLiked ? '&#9829;' : '&#9825;'} 좋아요 {a.likes + (isLiked ? 1 : 0)}
+                  {isLiked ? '♥' : '♡'}  좋아요 {a.likes + (isLiked ? 1 : 0)}
                 </button>
                 <span className="icon-btn" style={{ cursor: 'default' }}>댓글 {a.comments}</span>
                 <button className="text-link">수정</button>

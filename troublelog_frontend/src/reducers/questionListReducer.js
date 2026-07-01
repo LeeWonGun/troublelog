@@ -2,6 +2,7 @@ import { QLIST } from '../constants/actionTypes.js'
 
 // 게시판 목록 페이지 상태
 export const initialState = {
+  keyword: '',
   sortBy: 'latest',      // latest | popular | solved | unsolved
   filterStatus: 'all',   // all | solved | unsolved
   filterTags: [],        // ['JAVA', 'React', ...]
