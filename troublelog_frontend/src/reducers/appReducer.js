@@ -7,7 +7,6 @@ export const initialState = {
   nickname: null,
   email: null,
   authProvider: null,  // 'LOCAL' | 'GOOGLE'
-  userSince: null,
   globalLoading: false, // axios 요청 진행 중 오버레이 표시 여부
 
   teams: [],
@@ -38,7 +37,6 @@ const appReducer = (state, action) => {
         nickname: action.payload.nickname,
         email: action.payload.email,
         authProvider: action.payload.authProvider,
-        userSince: action.payload.userSince ?? null,
       }
 
     // 로그아웃 시 사용자 정보 초기화

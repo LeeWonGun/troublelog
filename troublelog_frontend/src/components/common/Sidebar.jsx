@@ -9,7 +9,7 @@ function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const { state, dispatch } = useAppContext()
-  const { isLoggedIn, teams, teamListOpen, activeTeam, nickname, userSince } = state
+  const { isLoggedIn, teams, teamListOpen, activeTeam, nickname } = state
   const isBoard = location.pathname === '/board'
 
   function handleTeamNav(teamId) {

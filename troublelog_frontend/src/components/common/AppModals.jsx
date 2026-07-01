@@ -4,7 +4,7 @@ import { APP } from '../../constants/actionTypes.js'
 import { MODAL } from '../../constants/modalTypes.js'
 import StackSelector from './StackSelector.jsx'
 import { requestHandler } from '../../util/requestHandler.js'
-import { createTeam, getMyTeams, joinTeam } from '../../api/teamApi.js'
+import { createTeam, getMyTeams, getTeamByCode, joinTeam } from '../../api/teamApi.js'
 
 function AppModals() {
   const { state, dispatch } = useAppContext()
@@ -17,6 +17,10 @@ function AppModals() {
 
   const [teamNameError, setTeamNameError] = useState(false)
   const [teamCodeError, setTeamCodeError] = useState(false)
+  const [teamCodeErrorMsg, setTeamCodeErrorMsg] = useState('')
+
+  // teamByCode로 검증에 성공한 팀 정보. null이면 아직 코드 입력 단계, 값이 있으면 참여 확인 단계.
+  const [verifiedTeam, setVerifiedTeam] = useState(null)
 
   const [copied, setCopied] = useState(false)
   const copyTimeoutRef = useRef(null)
@@ -27,6 +31,15 @@ function AppModals() {
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
     }
   }, [])
+
+  // JOIN_TEAM 모달이 오픈될 때마다 이전 검증 상태를 초기화
+  useEffect(() => {
+    if (modal === MODAL.JOIN_TEAM) {
+      setVerifiedTeam(null)
+      setTeamCodeError(false)
+      setTeamCodeErrorMsg('')
+    }
+  }, [modal])
 
   async function copyToClipboard(text) {
     try {
@@ -67,13 +80,53 @@ function AppModals() {
     })
   }
 
+  // 팀 코드가 실제로 존재/유효한지 먼저 확인
+  async function verifyTeamCodeFn() {
+    const teamCode = teamCodeRef.current?.value?.trim()
+    if (!teamCode || teamCode.length > 50) {
+      setTeamCodeError(true)
+      setTeamCodeErrorMsg('팀 코드를 입력하세요.')
+      setVerifiedTeam(null)
+      return
+    }
+    setTeamCodeError(false)
+    setTeamCodeErrorMsg('')
+
+    requestHandler(() => getTeamByCode(teamCode), {
+      onSuccess: (data) => setVerifiedTeam(data),
+      onFail: (message) => {
+        setVerifiedTeam(null)
+        setTeamCodeError(true)
+        setTeamCodeErrorMsg(message)
+      },
+    })
+  }
+
+  // 검증을 통과한 팀에 한해서만 실제 참여 요청을 보낸다.
+  async function joinTeamFn() {
+    if (!verifiedTeam || verifiedTeam.role) return
+
+    requestHandler(() => joinTeam(verifiedTeam.teamCode), {
+      onSuccess: (data) => {
+        dispatch({ type: APP.JOIN_TEAM, payload: data })
+        close()
+      },
+      onFail: (message) => {
+        setVerifiedTeam(null)
+        setTeamCodeError(true)
+        setTeamCodeErrorMsg(message)
+      },
+      showGlobalError: true,
+    })
+  }
+
   async function joinTeamFn() {
     const teamCode = teamCodeRef.current?.value?.trim();
     if (!teamCode || teamCode.length > 50) {
-      setTeamNameError(true);
+      setTeamCodeError(true);
       return;
     }
-    setTeamNameError(false);
+    setTeamCodeError(false);
 
     requestHandler(() => joinTeam(teamCode), {
       onSuccess: (data) => {
@@ -143,14 +196,41 @@ function AppModals() {
         <div className="modal">
           <h3>팀 참여</h3>
           <p className="modal-subtitle">팀장에게 공유받은 코드를 입력하여 팀에 참가하세요.</p>
-          <div className="form-group form-group--mt">
-            <input className="input text-mono" placeholder="팀 코드 입력" ref={teamCodeRef} maxLength={50} />
-            {teamNameError && <div className="error-msg">팀 코드를 확인해 주세요.</div>}
-          </div>
-          <div className="modal-actions">
-            <button className="btn btn-ghost" onClick={close}>취소</button>
-            <button className="btn btn-primary" onClick={joinTeamFn}>입력</button>
-          </div>
+
+          {!verifiedTeam ? (
+            // 1단계: 팀 코드 입력 후 유효성 확인
+            <>
+              <div className="form-group form-group--mt">
+                <input
+                  className="input text-mono"
+                  placeholder="팀 코드 입력"
+                  ref={teamCodeRef}
+                  maxLength={50}
+                  onChange={() => { setTeamCodeError(false); setTeamCodeErrorMsg('') }}
+                />
+                {teamCodeError && <div className="error-msg">{teamCodeErrorMsg || '팀 코드를 확인해 주세요.'}</div>}
+              </div>
+              <div className="modal-actions">
+                <button className="btn btn-ghost" onClick={close}>취소</button>
+                <button className="btn btn-primary" onClick={verifyTeamCodeFn}>확인</button>
+              </div>
+            </>
+          ) : (
+            // 2단계: 검증된 팀 정보를 보여주고 최종 참여 여부를 확인받는다.
+            <>
+              <div className="form-group form-group--mt">
+                <div className="field-label">팀 이름</div>
+                <div className="team-code-value">{verifiedTeam.name}</div>
+                {verifiedTeam.description && <p className="modal-subtitle">{verifiedTeam.description}</p>}
+              </div>
+              {alreadyJoined && <div className="error-msg">이미 참여 중인 팀입니다.</div>}
+              {!alreadyJoined && teamCodeError && <div className="error-msg">{teamCodeErrorMsg}</div>}
+              <div className="modal-actions">
+                <button className="btn btn-ghost" onClick={() => setVerifiedTeam(null)}>다시 입력</button>
+                <button className="btn btn-primary" onClick={joinTeamFn} disabled={alreadyJoined}>참여</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     )

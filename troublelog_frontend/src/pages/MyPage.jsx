@@ -35,7 +35,6 @@ function MyPage() {
       <div className="mypage-head">
         <div>
           <h1>마이페이지</h1>
-          <span className="since">가입일: {appState.userSince}</span>
         </div>
         <button
           className="btn btn-ghost btn-sm"
@@ -112,25 +111,24 @@ function MyPage() {
       </div>
       <div className="panel">
         {appState.teams.map(t => (
-          <div key={t.id} className="team-manage-row">
+          <div key={t.teamId} className="team-manage-row">
             <div>
               {t.name}
-              <span className={`role-tag ${t.role === 'leader' ? 'leader' : 'member'}`}>
-                {t.role === 'leader' ? '팀장' : '팀원'}
+              <span className={`role-tag ${t.role === 'LEADER' ? 'LEADER' : 'MEMBER'}`}>
+                {t.role === 'LEADER' ? '팀장' : '팀원'}
               </span>
             </div>
-            {t.role === 'leader' ? (
+            {t.role === 'LEADER' ? (
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.TEAM_MANAGE, teamId: t.id } })}
+                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.TEAM_MANAGE, teamId: t.teamId } })}
               >
                 관리
               </button>
             ) : (
-              /* 탈퇴 버튼: 목업 기준 btn-danger (빨간 테두리) */
               <button
                 className="btn btn-danger btn-sm"
-                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.LEAVE_CONFIRM, teamId: t.id } })}
+                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.LEAVE_CONFIRM, teamId: t.teamId } })}
               >
                 탈퇴
               </button>
