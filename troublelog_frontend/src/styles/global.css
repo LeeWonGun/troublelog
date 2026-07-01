@@ -445,7 +445,7 @@ input, textarea, select { font-family: inherit; }
 .mini-row--pad { border-bottom: none; min-height: 54px; }
 .team-manage-row { display: flex; align-items: center; justify-content: space-between; padding: 13px 4px; border-bottom: 1px solid var(--border-soft); }
 .team-manage-row:last-child { border-bottom: none; }
-.role-tag { font-family: var(--font-mono); font-size: 10.5px; padding: 2px 7px; border-radius: 4px; margin-left: 8px; }
+.role-tag { font-family: var(--font-mono); font-size: 12px; padding: 2px 7px; border-radius: 4px; margin-left: 8px; }
 .role-tag.leader { background: var(--blue-soft-bg); color: var(--blue-bright); }
 .role-tag.member { background: var(--bg-surface-3); color: var(--text-muted); }
 
@@ -511,7 +511,21 @@ input, textarea, select { font-family: inherit; }
   font-weight: 600;
   font-size: 15px;
 }
+/* ── 팀 참여 2단계: 검증된 팀 정보 그룹 박스 ── */
+.team-info-box {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.team-info-box .form-group:last-child { margin-bottom: 0; }
 
+.join-confirm-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: left;
+  margin: 14px 0 0 15px;
+}
 /* ── 모달 변형 ── */
 .modal-actions--spread { justify-content: space-between; }
 
@@ -540,6 +554,10 @@ input, textarea, select { font-family: inherit; }
 .select--team     { width: 140px; }
 .text-mono        { font-family: var(--font-mono); }
 .team-code-value  { color: var(--blue-bright); font-family: var(--font-mono); }
+.modal-team-code-label .team-code-value {
+  font-size: 16px;
+  font-weight: 700;
+}
 
 /* auth-note 상단 여백 제거 */
 .auth-note--no-mt { margin-top: 0; }

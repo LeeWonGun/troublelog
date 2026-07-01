@@ -85,10 +85,10 @@ const appReducer = (state, action) => {
     }
 
     case APP.REMOVE_TEAM:
-      return { ...state, teams: state.teams.filter(t => t.id !== action.payload), modal: null }
+      return { ...state, teams: state.teams.filter(t => t.teamId !== action.payload), modal: null }
 
     case APP.LEAVE_TEAM:
-      return { ...state, teams: state.teams.filter(t => t.id !== action.payload), modal: null }
+      return { ...state, teams: state.teams.filter(t => t.teamId !== action.payload), modal: null }
 
     case APP.SET_SEARCH_KEYWORD:
       return { ...state, searchKeyword: action.payload }
