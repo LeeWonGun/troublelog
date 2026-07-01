@@ -89,7 +89,7 @@ function Sidebar() {
                 <button
                   key={t.teamId}
                   className={`nav-item ${isBoard && activeTeam === t.teamId ? 'active' : ''}`}
-                  onClick={() => handleTeamNav(t.id)}
+                  onClick={() => handleTeamNav(t.teamId)}
                 >
                   <span className="dot" /> {t.name}
                 </button>

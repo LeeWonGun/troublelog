@@ -67,7 +67,6 @@ function QuestionListPage() {
     <div className="main">
       <SearchBar
         placeholder="제목, 내용으로 검색"
-        onSearch={() => dispatch({ type: QLIST.SET_KEYWORD, payload: searchKeyword })}
       />
 
       <div className="page-head">
