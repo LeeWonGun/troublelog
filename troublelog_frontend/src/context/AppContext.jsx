@@ -5,7 +5,7 @@ import { AUTH_PAGE_PATHS } from '../constants/routePaths.js'
 import { getMe } from '../api/authApi.js'
 import { getMyTeams } from '../api/teamApi.js'
 import { registerLoadingCallback } from '../api/axiosInstance.js'
-import { requestHandler } from '../util/requestHandler.js'
+import { requestHandler, registerGlobalErrorHandler } from '../util/requestHandler.js'
 import { useLocation } from 'react-router-dom'
 
 
@@ -23,6 +23,13 @@ export function AppProvider({ children }) {
   useEffect(() => {
     registerLoadingCallback((isLoading) => {
       dispatch({ type: APP.SET_GLOBAL_LOADING, payload: isLoading })
+    })
+  }, [])
+
+  // requestHandler(showGlobalError: true)가 호출하는 전역 에러 모달 콜백 등록
+  useEffect(() => {
+    registerGlobalErrorHandler((message) => {
+      dispatch({ type: APP.SHOW_ERROR, payload: message })
     })
   }, [])
 

@@ -18,6 +18,8 @@ export const initialState = {
   modalTeamTarget: null,     // 팀 관리/탈퇴 대상 팀 id
   createdTeamCode: null,
 
+  errorModal: null,          // 전역 에러 모달에 표시할 메시지 (null이면 비표시)
+
   // 상세 검색 필터 (기술 스택 + 상태만, 이미지 필터 없음)
   searchKeyword: '',
   searchStackToggles: {},   // 'language-Java' -> bool 형태
@@ -68,12 +70,19 @@ const appReducer = (state, action) => {
       return { ...state, modal: null }
 
     case APP.ADD_TEAM: {
-      const newTeam = { id: Date.now(), name: action.payload.name, role: 'leader' }
       return {
         ...state,
-        teams: [...state.teams, newTeam],
+        teams: [...state.teams, action.payload],
         modal: MODAL.CREATE_TEAM_SUCCESS,
-        createdTeamCode: action.payload.code ?? 'Q7K2P9',
+        createdTeamCode: action.payload.teamCode,
+      }
+    }
+
+    case APP.JOIN_TEAM: {
+      return {
+        ...state,
+        teams: [...state.teams, action.payload],
+        modal: null,
       }
     }
 
@@ -101,6 +110,13 @@ const appReducer = (state, action) => {
     // 검색 필터 초기화 (이미지 필터 없음, 목업 기준)
     case APP.RESET_SEARCH_FILTERS:
       return { ...state, searchStackToggles: {}, searchStatus: 'all', searchKeyword: '' }
+
+    // 전역 에러 모달 표시 - requestHandler(showGlobalError: true) 실패 시 호출됨
+    case APP.SHOW_ERROR:
+      return { ...state, errorModal: action.payload }
+
+    case APP.HIDE_ERROR:
+      return { ...state, errorModal: null }
 
     default:
       return state

@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAppContext } from '../../context/AppContext.jsx'
 import { APP } from '../../constants/actionTypes.js'
 import { MODAL } from '../../constants/modalTypes.js'
 import StackSelector from './StackSelector.jsx'
+import { requestHandler } from '../../util/requestHandler.js'
+import { createTeam, getMyTeams, joinTeam } from '../../api/teamApi.js'
 
 function AppModals() {
   const { state, dispatch } = useAppContext()
@@ -12,6 +14,30 @@ function AppModals() {
   const teamDescRef = useRef(null)
   const teamCodeRef = useRef(null)
   const nicknameRef = useRef(null)
+
+  const [teamNameError, setTeamNameError] = useState(false)
+  const [teamCodeError, setTeamCodeError] = useState(false)
+
+  const [copied, setCopied] = useState(false)
+  const copyTimeoutRef = useRef(null)
+
+  // 언마운트 시 타이머 정리 (setState on unmounted component 방지)
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+    }
+  }, [])
+
+  async function copyToClipboard(text) {
+    try {
+      await navigator.clipboard?.writeText(text)
+      setCopied(true)
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 1500)
+    } catch (e) {
+      console.warn('[AppModals] 클립보드 복사 실패:', e)
+    }
+  }
 
   if (!modal) return null
 
@@ -23,6 +49,42 @@ function AppModals() {
 
   const targetTeam = teams.find(t => t.id === modalTeamTarget)
 
+  async function createTeamFn() {
+    const name = teamNameRef.current?.value?.trim()
+    const description = teamDescRef.current?.value?.trim()
+
+    if (!name || name.length > 100) {
+      setTeamNameError(true);
+      return
+    }
+
+    setTeamNameError(false)
+
+    requestHandler(() => createTeam({ name, description }), {
+      onSuccess: (data) => dispatch({ type: APP.ADD_TEAM, payload: data }),
+      onFail: (message) => console.warn('[AppModals] 팀 생성 실패:', message),
+      showGlobalError: true,
+    })
+  }
+
+  async function joinTeamFn() {
+    const teamCode = teamCodeRef.current?.value?.trim();
+    if (!teamCode || teamCode.length > 50) {
+      setTeamNameError(true);
+      return;
+    }
+    setTeamNameError(false);
+
+    requestHandler(() => joinTeam(teamCode), {
+      onSuccess: (data) => {
+        dispatch({ type: APP.JOIN_TEAM, payload: data })
+        close()
+      },
+      onFail: (message) => console.warn('[AppModals] 팀 참여 실패:', message),
+      showGlobalError: true,
+    })
+  }
+
   // ── 팀 생성 ──────────────────────────────────────────────────────
   if (modal === MODAL.CREATE_TEAM) {
     return (
@@ -31,7 +93,8 @@ function AppModals() {
           <h3>팀 생성</h3>
           <div className="form-group">
             <label>팀 이름 <span className="form-label-hint">(필수, 최대 100자)</span></label>
-            <input className="input" placeholder="팀 이름을 입력해 주세요" ref={teamNameRef} />
+            <input className="input" placeholder="팀 이름을 입력해 주세요" ref={teamNameRef} maxLength={100} />
+            {teamNameError && <div className="error-msg">팀 이름을 입력하세요.</div>}
           </div>
           <div className="form-group">
             <label>팀 설명 <span className="form-label-hint">(선택)</span></label>
@@ -41,12 +104,7 @@ function AppModals() {
             <button className="btn btn-ghost" onClick={close}>취소</button>
             <button
               className="btn btn-primary"
-              onClick={() =>
-                dispatch({
-                  type: APP.ADD_TEAM,
-                  payload: { name: teamNameRef.current?.value?.trim() || '새 팀', code: 'Q7K2P9' },
-                })
-              }
+              onClick={createTeamFn}
             >
               생성
             </button>
@@ -61,12 +119,16 @@ function AppModals() {
     return (
       <div className="modal-overlay" onClick={handleBackdrop}>
         <div className="modal">
-          <div className="modal-success-icon">&#10003;</div>
-          <h3>팀이 성공적으로 생성되었습니다</h3>
-          <p className="modal-subtitle">아래 코드를 공유해서 팀원을 초대하세요.</p>
+          <div className="modal-success-header">
+            <div className="modal-success-icon">&#10003;</div>
+            <div className="modal-success-text">
+              <h3>팀이 성공적으로 생성되었습니다</h3>
+              <p className="modal-subtitle">아래 코드를 공유해서 팀원을 초대하세요.</p>
+            </div>
+          </div>
           <div className="code-display">{createdTeamCode}</div>
           <div className="modal-actions modal-actions--spread">
-            <button className="btn btn-ghost" onClick={() => navigator.clipboard?.writeText(createdTeamCode)}>복사</button>
+            <button className="btn btn-ghost" onClick={() => copyToClipboard(createdTeamCode)}>복사</button>
             <button className="btn btn-primary" onClick={close}>확인</button>
           </div>
         </div>
@@ -82,11 +144,12 @@ function AppModals() {
           <h3>팀 참여</h3>
           <p className="modal-subtitle">팀장에게 공유받은 코드를 입력하여 팀에 참가하세요.</p>
           <div className="form-group form-group--mt">
-            <input className="input text-mono" placeholder="팀 코드 입력" ref={teamCodeRef} />
+            <input className="input text-mono" placeholder="팀 코드 입력" ref={teamCodeRef} maxLength={50} />
+            {teamNameError && <div className="error-msg">팀 코드를 확인해 주세요.</div>}
           </div>
           <div className="modal-actions">
             <button className="btn btn-ghost" onClick={close}>취소</button>
-            <button className="btn btn-primary" onClick={close}>입력</button>
+            <button className="btn btn-primary" onClick={joinTeamFn}>입력</button>
           </div>
         </div>
       </div>

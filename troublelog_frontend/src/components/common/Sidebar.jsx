@@ -28,6 +28,7 @@ function Sidebar() {
         dispatch({ type: APP.CLEAR_USER })
       },
       onFail: (message) => console.warn('[AppContext] 로그아웃 실패:', message),
+      showGlobalError: true,
     })
   }
 
