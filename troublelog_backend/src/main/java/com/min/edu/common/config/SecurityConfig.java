@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.List;
 
@@ -69,6 +70,15 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
+
+                        // 비회원도 조회 가능한 공개 API
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/questions/public",
+                                "/api/questions/search",
+                                "/api/questions/*",
+                                "/api/tech-stacks"
+                        ).permitAll()
+                        
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtCookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
