@@ -133,6 +133,22 @@ public class QuestionController {
     }
 
     /**
+     * 공개 질문을 인기순으로 조회한다.
+     *
+     * /api/questions/public?sort=POPULAR의 별칭 API이다.
+     */
+    @GetMapping("/api/questions/popular")
+    public ApiResponse<PageResponse<QuestionListResponse>> getPopularQuestions(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size
+    ) {
+        return ApiResponse.success(
+                "인기 질문 목록 조회 성공",
+                questionService.getPublicQuestions(page, size, "POPULAR")
+        );
+    }
+
+    /**
      * 작성자 본인이 질문을 수정한다.
      */
     @PutMapping("/api/questions/{questionId}")
@@ -180,6 +196,8 @@ public class QuestionController {
                 questionService.getMyQuestions(currentUserId, page, size, sort)
         );
     }
+
+
 
     /**
      * 팀원이 해당 팀의 TEAM 질문 목록을 조회한다.
