@@ -2,6 +2,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAppContext } from '../../context/AppContext.jsx'
 import { APP } from '../../constants/actionTypes.js'
 import { MODAL } from '../../constants/modalTypes.js'
+import { requestHandler } from '../../util/requestHandler.js'
+import { logout } from '../../api/authApi.js'
 
 function Sidebar() {
   const navigate = useNavigate()
@@ -21,8 +23,12 @@ function Sidebar() {
   }
 
   function handleLogout() {
-    dispatch({ type: APP.CLEAR_USER })
-    navigate('/login')
+    requestHandler(logout, {
+      onSuccess: (data) => {
+        dispatch({ type: APP.CLEAR_USER })
+      },
+      onFail: (message) => console.warn('[AppContext] 로그아웃 실패:', message),
+    })
   }
 
   return (
@@ -35,8 +41,7 @@ function Sidebar() {
         <>
           <div className="user-pill">
             <div>
-              <div className="name">{'😀 '} {nickname} {'님'}</div>
-              <div className="since">since {userSince}</div>
+              <div className="name">{'😀 '} {nickname} {'님, 환영합니다.🎉'}</div>
             </div>
           </div>
           <button className="btn btn-primary btn-block" onClick={() => navigate('/questions/create')}>
@@ -47,7 +52,7 @@ function Sidebar() {
         <>
           <div className="user-pill">
             <div>
-              <div className="name">{'😀 비회원님'}</div>
+              <div className="name">{'😀 비회원님, 환영합니다.🎉'}</div>
             </div>
           </div>
           <button className="btn btn-primary btn-block" onClick={() => navigate('/login')}>

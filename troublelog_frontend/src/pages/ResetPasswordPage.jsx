@@ -145,8 +145,8 @@ function ResetPasswordPage() {
             <label>이메일 인증 코드</label>
             <div className="input-row">
               <input
-                className="input"
-                placeholder="인증 코드 입력"
+                className={`input${state.emailVerified ? ' input--success' : ''}`}
+                placeholder="이메일 인증 코드"
                 value={state.emailCode}
                 onChange={e => dispatch({
                   type: CHANGE_PASS.SET_FIELD,
@@ -156,8 +156,15 @@ function ResetPasswordPage() {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={6}
+                disabled={state.emailVerified}  // 인증 완료 후 재입력 방지
               />
-              <button className="btn btn-ghost btn-sm">인증 확인</button>
+               <button
+                className="btn btn-ghost btn-sm"
+                onClick={handleVerifyCode}
+                disabled={state.emailVerified}
+              >
+                {state.emailVerified ? '인증 완료' : '인증 확인'}
+              </button>
             </div>
           </div>
         )}
