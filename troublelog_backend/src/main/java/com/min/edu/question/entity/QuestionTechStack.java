@@ -48,4 +48,9 @@ public class QuestionTechStack {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tech_stack_id", insertable = false, updatable = false)
     private TechStack techStack;
+
+    public QuestionTechStack(Long questionId, Long techStackId) {
+        this.questionId = questionId;
+        this.techStackId = techStackId;
+    }
 }

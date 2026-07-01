@@ -15,22 +15,12 @@ import java.util.Optional;
  */
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    /**
-     * 공개 질문 목록을 페이징 조회한다.
-     *
-     * PUBLIC 질문만 조회하고, 삭제된 질문은 제외한다.
-     */
     Page<Question> findByVisibilityAndDelflag(
             String visibility,
             String delflag,
             Pageable pageable
     );
 
-    /**
-     * 공개 질문 목록을 상태 조건까지 포함하여 페이징 조회한다.
-     *
-     * sort=SOLVED 또는 sort=UNSOLVED 요청을 처리할 때 사용한다.
-     */
     Page<Question> findByVisibilityAndDelflagAndStatus(
             String visibility,
             String delflag,
@@ -38,8 +28,33 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             Pageable pageable
     );
 
-    /**
-     * 질문 상세 조회 시 삭제되지 않은 질문만 조회한다.
-     */
+    Page<Question> findByWriterIdAndDelflag(
+            Long writerId,
+            String delflag,
+            Pageable pageable
+    );
+
+    Page<Question> findByWriterIdAndDelflagAndStatus(
+            Long writerId,
+            String delflag,
+            String status,
+            Pageable pageable
+    );
+
+    Page<Question> findByTeamIdAndVisibilityAndDelflag(
+            Long teamId,
+            String visibility,
+            String delflag,
+            Pageable pageable
+    );
+
+    Page<Question> findByTeamIdAndVisibilityAndDelflagAndStatus(
+            Long teamId,
+            String visibility,
+            String delflag,
+            String status,
+            Pageable pageable
+    );
+
     Optional<Question> findByIdAndDelflag(Long id, String delflag);
 }
