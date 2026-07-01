@@ -69,7 +69,7 @@ public class Question {
     private Long acceptedAnswerId;
 
     // N: 정상, Y: 삭제
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "CHAR(1)")
     private String delflag;
 
     @Column(name = "created_at", nullable = false)

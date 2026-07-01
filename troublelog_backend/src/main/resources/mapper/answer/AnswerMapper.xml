@@ -147,5 +147,53 @@
 	    SET a.delflag = 'Y'
 	    WHERE a.delflag = 'N'
 	</update>
-
+	
+	<!-- 토글 방향 판단용 조회일 뿐, 여기서 나온 null은 권한 판단 근거로 쓰지 않는다. -->
+	<select id="findAcceptedAnswerId" resultType="java.lang.Long">
+	    SELECT accepted_answer_id
+	    FROM questions
+	    WHERE id = #{questionId}
+	      AND writer_id = #{userId}
+	      AND delflag = 'N'
+	</select>
+	
+	
+	<!-- 
+	 답변 채택(교체 포함). 질문 작성자 본인이고, 대상이 해당 질문에 속한 depth=0 답변인 경우에만 허용한다.
+	 TEAM 질문이면 현재도 팀원인 경우에만 허용한다.
+	 이미 다른 답변이 채택돼 있어도 여기서 그대로 덮어쓴다.
+	-->
+	<update id="acceptAnswer">
+	    UPDATE questions q
+	    JOIN answers a ON a.question_id = q.id
+	    SET q.accepted_answer_id = #{answerId},
+	        q.status = 'SOLVED'
+	    WHERE q.id = #{questionId}
+	      AND q.writer_id = #{userId}
+	      AND q.delflag = 'N'
+	      AND a.id = #{answerId}
+	      AND a.depth = 0
+	      AND a.delflag = 'N'
+	      AND (q.visibility = 'PUBLIC'
+	           OR (q.visibility = 'TEAM' AND EXISTS (
+	               SELECT 1 FROM team_members tm
+	               WHERE tm.team_id = q.team_id AND tm.user_id = #{userId} AND tm.delflag = 'N')))
+	</update>
+	
+	
+	<!-- 채택 해제 (토글 off). 질문 작성자 본인이고, TEAM 질문이면 현재도 팀원인 경우에만 허용한다. -->
+	<update id="cancelAcceptedAnswer">
+	    UPDATE questions q
+	    SET q.accepted_answer_id = NULL,
+	        q.status = 'UNSOLVED'
+	    WHERE q.id = #{questionId}
+	      AND q.writer_id = #{userId}
+	      AND q.delflag = 'N'
+	      AND q.accepted_answer_id IS NOT NULL
+	      AND (q.visibility = 'PUBLIC'
+	           OR (q.visibility = 'TEAM' AND EXISTS (
+	               SELECT 1 FROM team_members tm
+	               WHERE tm.team_id = q.team_id AND tm.user_id = #{userId} AND tm.delflag = 'N')))
+	</update>
+	
 </mapper>

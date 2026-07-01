@@ -2,6 +2,7 @@ package com.min.edu.question.service;
 
 import com.min.edu.common.exception.BusinessException;
 import com.min.edu.common.exception.ErrorCode;
+import com.min.edu.common.response.PageResponse;
 import com.min.edu.question.dto.request.QuestionSearchCondition;
 import com.min.edu.question.dto.response.QuestionDetailResponse;
 import com.min.edu.question.dto.response.QuestionListResponse;
@@ -15,6 +16,10 @@ import com.min.edu.question.util.QuestionContentFormatter;
 import com.min.edu.question.util.QuestionContentParts;
 import com.min.edu.techstack.dto.response.TechStackResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,24 +44,65 @@ public class QuestionService {
     private static final String STATUS_UNSOLVED = "UNSOLVED";
     private static final String STATUS_SOLVED = "SOLVED";
 
-    private static final String SORT_LATEST = "latest";
-    private static final String SORT_POPULAR = "popular";
+    private static final String SORT_LATEST = "LATEST";
+    private static final String SORT_POPULAR = "POPULAR";
+
+    private static final int DEFAULT_PAGE = 0;
+    private static final int DEFAULT_SIZE = 10;
+    private static final int MAX_SIZE = 50;
 
     private final QuestionRepository questionRepository;
     private final QuestionTechStackRepository questionTechStackRepository;
     private final QuestionSearchMapper questionSearchMapper;
 
     /**
-     * 비회원도 볼 수 있는 공개 질문 목록을 조회한다.
+     * 비회원도 볼 수 있는 공개 질문 목록을 페이징 조회한다.
      *
-     * PUBLIC 질문만 조회하고, delflag = 'N'인 정상 질문만 반환한다.
+     * sort:
+     * - LATEST: 최신순
+     * - POPULAR: 인기순
+     * - SOLVED: 해결됨 질문만 최신순
+     * - UNSOLVED: 미해결 질문만 최신순
      */
     @Transactional(readOnly = true)
-    public List<QuestionListResponse> getPublicQuestions() {
-        List<Question> questions = questionRepository
-                .findByVisibilityAndDelflagOrderByCreatedAtDesc(VISIBILITY_PUBLIC, DELFLAG_NORMAL);
+    public PageResponse<QuestionListResponse> getPublicQuestions(
+            Integer page,
+            Integer size,
+            String sort
+    ) {
+        int normalizedPage = normalizePage(page);
+        int normalizedSize = normalizeSize(size);
+        String normalizedSort = normalizeSort(sort);
 
-        return toQuestionListResponses(questions);
+        Pageable pageable = createPageable(normalizedPage, normalizedSize, normalizedSort);
+
+        Page<Question> questionPage;
+
+        if (STATUS_SOLVED.equals(normalizedSort) || STATUS_UNSOLVED.equals(normalizedSort)) {
+            questionPage = questionRepository.findByVisibilityAndDelflagAndStatus(
+                    VISIBILITY_PUBLIC,
+                    DELFLAG_NORMAL,
+                    normalizedSort,
+                    pageable
+            );
+        } else {
+            questionPage = questionRepository.findByVisibilityAndDelflag(
+                    VISIBILITY_PUBLIC,
+                    DELFLAG_NORMAL,
+                    pageable
+            );
+        }
+
+        List<QuestionListResponse> content = toQuestionListResponses(questionPage.getContent());
+
+        return new PageResponse<>(
+                content,
+                normalizedPage,
+                normalizedSize,
+                questionPage.getTotalElements(),
+                questionPage.getTotalPages(),
+                questionPage.hasNext()
+        );
     }
 
     /**
@@ -84,31 +130,47 @@ public class QuestionService {
     }
 
     /**
-     * 공개 질문을 검색한다.
+     * 공개 게시판 또는 팀 게시판 질문을 검색한다.
      *
-     * 검색 SQL은 조건 조합이 많기 때문에 MyBatis Mapper에서 처리한다.
+     * teamId가 null이면 전체 공개 게시판 검색,
+     * teamId가 있으면 해당 팀 질문 검색으로 사용한다.
      *
-     * 검색 조건:
-     * - keyword: 제목 또는 본문 검색
-     * - status: UNSOLVED 또는 SOLVED
-     * - techStackIds: 선택된 기술 스택 중 하나라도 연결된 질문 검색
-     * - sort: latest 또는 popular
+     * TEAM 질문의 팀원 권한 검증은 인증/팀 구조 확정 후 추가한다.
      */
     @Transactional(readOnly = true)
-    public List<QuestionListResponse> searchPublicQuestions(QuestionSearchCondition condition) {
+    public PageResponse<QuestionListResponse> searchQuestions(
+            Long teamId,
+            QuestionSearchCondition condition
+    ) {
+        int page = normalizePage(condition.page());
+        int size = normalizeSize(condition.size());
         String keyword = normalizeKeyword(condition.keyword());
-        String status = normalizeStatus(condition.status());
-        String sort = normalizeSort(condition.sort());
+
+        SearchOption searchOption = resolveSearchOption(condition.sort(), condition.status());
         List<Long> techStackIds = normalizeTechStackIds(condition.techStackIds());
 
-        List<QuestionSearchRow> rows = questionSearchMapper.searchPublicQuestions(
+        int offset = page * size;
+
+        List<QuestionSearchRow> rows = questionSearchMapper.searchQuestions(
+                teamId,
                 keyword,
-                status,
+                searchOption.status(),
                 techStackIds,
-                sort
+                searchOption.sort(),
+                offset,
+                size
         );
 
-        return toQuestionListResponsesFromSearchRows(rows);
+        long totalElements = questionSearchMapper.countSearchQuestions(
+                teamId,
+                keyword,
+                searchOption.status(),
+                techStackIds
+        );
+
+        List<QuestionListResponse> content = toQuestionListResponsesFromSearchRows(rows);
+
+        return PageResponse.of(content, page, size, totalElements);
     }
 
     /**
@@ -123,10 +185,25 @@ public class QuestionService {
         }
     }
 
+    private Pageable createPageable(int page, int size, String sort) {
+        if (SORT_POPULAR.equals(sort)) {
+            return PageRequest.of(
+                    page,
+                    size,
+                    Sort.by(Sort.Direction.DESC, "likeCount")
+                            .and(Sort.by(Sort.Direction.DESC, "createdAt"))
+            );
+        }
+
+        return PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+    }
+
     /**
      * Question Entity 목록을 질문 목록 응답 DTO 목록으로 변환한다.
-     *
-     * 공개 질문 목록 조회처럼 JPA Entity를 조회한 경우 사용한다.
      */
     private List<QuestionListResponse> toQuestionListResponses(List<Question> questions) {
         if (questions.isEmpty()) {
@@ -149,8 +226,6 @@ public class QuestionService {
 
     /**
      * MyBatis 검색 결과 Row 목록을 질문 목록 응답 DTO 목록으로 변환한다.
-     *
-     * 검색 API처럼 Entity가 아니라 조회 전용 DTO로 결과를 받은 경우 사용한다.
      */
     private List<QuestionListResponse> toQuestionListResponsesFromSearchRows(List<QuestionSearchRow> rows) {
         if (rows.isEmpty()) {
@@ -173,8 +248,6 @@ public class QuestionService {
 
     /**
      * 질문 ID 목록에 연결된 기술 스택을 questionId 기준으로 묶어서 반환한다.
-     *
-     * 목록 조회와 검색 조회에서 공통으로 사용한다.
      */
     private Map<Long, List<TechStackResponse>> getTechStackMap(List<Long> questionIds) {
         if (questionIds.isEmpty()) {
@@ -194,8 +267,6 @@ public class QuestionService {
 
     /**
      * 특정 질문에 연결된 기술 스택 목록을 조회한다.
-     *
-     * 질문 상세 화면에서 기술 스택 태그를 보여줄 때 사용한다.
      */
     private List<TechStackResponse> getTechStacks(Long questionId) {
         return questionTechStackRepository.findByQuestionId(questionId)
@@ -204,21 +275,76 @@ public class QuestionService {
                 .toList();
     }
 
-    /**
-     * keyword 검색 조건을 정리한다.
-     *
-     * null 또는 공백만 있는 값은 검색 조건에서 제외하기 위해 빈 문자열로 변환한다.
-     */
+    private int normalizePage(Integer page) {
+        if (page == null) {
+            return DEFAULT_PAGE;
+        }
+
+        if (page < 0) {
+            throw new BusinessException(
+                    "페이지 번호는 0 이상이어야 합니다.",
+                    ErrorCode.INVALID_REQUEST
+            );
+        }
+
+        return page;
+    }
+
+    private int normalizeSize(Integer size) {
+        if (size == null) {
+            return DEFAULT_SIZE;
+        }
+
+        if (size <= 0) {
+            throw new BusinessException(
+                    "페이지 크기는 1 이상이어야 합니다.",
+                    ErrorCode.INVALID_REQUEST
+            );
+        }
+
+        if (size > MAX_SIZE) {
+            return MAX_SIZE;
+        }
+
+        return size;
+    }
+
     private String normalizeKeyword(String keyword) {
         return keyword == null ? "" : keyword.trim();
     }
 
-    /**
-     * status 검색 조건을 정리한다.
-     *
-     * 값이 없으면 전체 상태를 조회하고,
-     * 값이 있으면 UNSOLVED 또는 SOLVED만 허용한다.
-     */
+    private String normalizeSort(String sort) {
+        if (sort == null || sort.isBlank()) {
+            return SORT_LATEST;
+        }
+
+        String normalizedSort = sort.trim().toUpperCase();
+
+        if (!SORT_LATEST.equals(normalizedSort)
+                && !SORT_POPULAR.equals(normalizedSort)
+                && !STATUS_SOLVED.equals(normalizedSort)
+                && !STATUS_UNSOLVED.equals(normalizedSort)) {
+            throw new BusinessException(
+                    "정렬 조건이 올바르지 않습니다.",
+                    ErrorCode.INVALID_REQUEST
+            );
+        }
+
+        return normalizedSort;
+    }
+
+    private SearchOption resolveSearchOption(String sort, String status) {
+        String normalizedSort = normalizeSort(sort);
+        String normalizedStatus = normalizeStatus(status);
+
+        if ((STATUS_SOLVED.equals(normalizedSort) || STATUS_UNSOLVED.equals(normalizedSort))
+                && normalizedStatus.isBlank()) {
+            return new SearchOption(SORT_LATEST, normalizedSort);
+        }
+
+        return new SearchOption(normalizedSort, normalizedStatus);
+    }
+
     private String normalizeStatus(String status) {
         if (status == null || status.isBlank()) {
             return "";
@@ -236,35 +362,6 @@ public class QuestionService {
         return normalizedStatus;
     }
 
-    /**
-     * sort 검색 조건을 정리한다.
-     *
-     * 값이 없으면 최신순으로 처리하고,
-     * latest 또는 popular만 허용한다.
-     */
-    private String normalizeSort(String sort) {
-        if (sort == null || sort.isBlank()) {
-            return SORT_LATEST;
-        }
-
-        String normalizedSort = sort.trim().toLowerCase();
-
-        if (!SORT_LATEST.equals(normalizedSort) && !SORT_POPULAR.equals(normalizedSort)) {
-            throw new BusinessException(
-                    "정렬 조건이 올바르지 않습니다.",
-                    ErrorCode.INVALID_REQUEST
-            );
-        }
-
-        return normalizedSort;
-    }
-
-    /**
-     * 기술 스택 검색 조건을 정리한다.
-     *
-     * null이면 빈 목록으로 바꾸고,
-     * 0 이하의 잘못된 ID는 제외한다.
-     */
     private List<Long> normalizeTechStackIds(List<Long> techStackIds) {
         if (techStackIds == null) {
             return Collections.emptyList();
@@ -274,5 +371,14 @@ public class QuestionService {
                 .filter(techStackId -> techStackId != null && techStackId > 0)
                 .distinct()
                 .toList();
+    }
+
+    /**
+     * 검색용 정렬 조건과 상태 필터를 함께 보관하는 내부 DTO이다.
+     */
+    private record SearchOption(
+            String sort,
+            String status
+    ) {
     }
 }

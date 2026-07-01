@@ -1,22 +1,60 @@
 services:
+  backend:
+    build:
+      context: ./troublelog_backend
+    container_name: troublelog-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      TZ: Asia/Seoul
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-troublelog}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-troublelog}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-troublelog}
+      JWT_SECRET: ${JWT_SECRET:-troublelog-local-development-secret-key-must-be-32-bytes}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      JWT_COOKIE_SECURE: ${JWT_COOKIE_SECURE:-false}
+      JWT_COOKIE_SAME_SITE: ${JWT_COOKIE_SAME_SITE:-Lax}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-google-client-id-required}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-google-client-secret-required}
+      OAUTH2_SUCCESS_REDIRECT_URI: ${OAUTH2_SUCCESS_REDIRECT_URI:-http://localhost:5173/mockup-api-test.html}
+      MAIL_PROVIDER: ${MAIL_PROVIDER:-smtp}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_CODE_EXPIRATION_MINUTES: ${MAIL_CODE_EXPIRATION_MINUTES:-5}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+
   mysql:
     image: mysql:8.0
     container_name: troublelog-mysql
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     environment:
       TZ: Asia/Seoul
-      MYSQL_DATABASE: troublelog
-      MYSQL_USER: troublelog
-      MYSQL_PASSWORD: troublelog
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-troublelog}
+      MYSQL_USER: ${MYSQL_USER:-troublelog}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-troublelog}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     volumes:
       - troublelog-mysql-data:/var/lib/mysql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-time-zone=+09:00
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   troublelog-mysql-data:

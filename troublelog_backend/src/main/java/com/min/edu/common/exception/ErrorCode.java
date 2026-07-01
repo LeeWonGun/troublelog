@@ -19,8 +19,14 @@ public enum ErrorCode {
      * 사용자 / 인증 관련 오류 코드
      */
     USER_NOT_FOUND,
+    DUPLICATE_EMAIL,
+    DUPLICATE_NICKNAME,
     INVALID_PASSWORD,
+    INVALID_AUTH_PROVIDER,
     GOOGLE_USER_PASSWORD_RESET_NOT_ALLOWED,
+    INVALID_VERIFICATION_CODE,
+    EXPIRED_VERIFICATION_CODE,
+    MAIL_SEND_FAILED,
 
     /*
      * 팀 관련 오류 코드
@@ -28,6 +34,7 @@ public enum ErrorCode {
     TEAM_NOT_FOUND,
     INVALID_TEAM_CODE,
     ALREADY_JOINED_TEAM,
+    TEAM_MEMBER_NOT_FOUND,
     CANNOT_LEAVE_LEADER,
 
     /*

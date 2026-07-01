@@ -44,4 +44,22 @@ public interface AnswerMapper {
 	
 	// 삭제 대상의 하위 댓글/대댓글을 작성자 무관하게 일괄 소프트 삭제한다. (cascade)
 	int softDeleteDescendants(@Param("id") Long id);
+	
+	
+	
+	// 현재 질문의 채택된 답변 id를 조회한다. (토글 방향 판단용)
+	Long findAcceptedAnswerId(@Param("questionId") Long questionId, @Param("userId") Long userId);
+	
+	
+	/* 
+	 * 답변 채택: 질문 작성자 본인이고, depth=0 답변이며, 해당 질문에 속한 경우에만 허용한다. 
+	 * 이미 채택된 답변이 있어도 여기서 덮어써진다 (재채택 = 자동 교체).
+	 */
+	int acceptAnswer(@Param("questionId") Long questionId, @Param("answerId") Long answerId, @Param("userId") Long userId);
+	
+	
+	// 채택 해제 (토글 off): 질문 작성자 본인인 경우에만 허용한다.
+	int cancelAcceptedAnswer(@Param("questionId") Long questionId, @Param("userId") Long userId);
+	
+	
 }

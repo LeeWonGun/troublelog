@@ -251,6 +251,47 @@ public class AnswerService {
 	}
 	
 	
+	/* 
+	 * 답변 채택/해제 토글 (질문 작성자 본인만, depth=0 답변만 채택 가능)
+	 * URL에 answerId만 오므로, 소속 questionId는 답변을 통해 조회한다. 
+	 */
+	@Transactional
+	public void toggleAcceptAnswer(Long answerId, Long userId) {
+		
+		AnswerEntity answer = answerMapper.findAnswerById(answerId);
+		
+		if(answer == null) {
+			throw new BusinessException("답변을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		if(answer.getDepth() != 0) {
+			throw new BusinessException("답변만 채택할 수 있습니다", ErrorCode.ONLY_DEPTH_ZERO_CAN_BE_ACCEPTED);
+		}
+		
+		Long questionId = answer.getQuestionId();
+		
+		/* 
+		 * 토글 방향 판단용 조회일 뿐, 여기서 나온 null은 권한 판단 근거로 쓰지 않는다.
+		 * 실제 권한 검증은 아래 acceptAnswer/cancelAcceptedAnswer의 WHERE절(작성자 일치)이 담당한다. 
+		 */
+		Long currentAcceptedId = answerMapper.findAcceptedAnswerId(questionId, userId);
+		
+		if(answerId.equals(currentAcceptedId)) {
+			// 이미 채택된 답변을 다시 누른 경우 -> 해제
+			int canceled = answerMapper.cancelAcceptedAnswer(questionId, userId);
+			if(canceled == 0) {
+				throw new BusinessException("질문 작성자만 채택을 해제할 수 있습니다", ErrorCode.FORBIDDEN);
+			}
+		} else {
+			// 새로 채택하거나, 다른 답변으로 교체
+			int accepted = answerMapper.acceptAnswer(questionId, answerId, userId);
+			if(accepted == 0) {
+				throw new BusinessException("질문 작성자만 답변을 채택할 수 있습니다", ErrorCode.FORBIDDEN);
+			}
+		}
+	}
+	
+	
 	
 	
 	

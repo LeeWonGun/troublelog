@@ -114,5 +114,17 @@ public class AnswerController {
 	    
 	    return ApiResponse.success("삭제가 완료되었습니다.");
 	}
+	
+	
+	// 답변 채택/해제 토글
+	@PostMapping("/api/answers/{answerId}/accept")
+	public ApiResponse<Void> toggleAcceptAnswer(@PathVariable Long answerId) {
+		// TODO: JWT 인증 구현 후 현재 로그인 사용자 ID를 SecurityContext에서 가져오도록 수정
+		Long userId = 2L;
+
+		answerService.toggleAcceptAnswer(answerId, userId);
+
+		return ApiResponse.success("채택 상태가 변경되었습니다.");
+	}
 
 }
