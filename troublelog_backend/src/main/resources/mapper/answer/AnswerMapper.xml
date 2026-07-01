@@ -95,12 +95,57 @@
 	               WHERE tm.team_id = q.team_id AND tm.user_id = #{writerId} AND tm.delflag = 'N')))
 	</update>
 	
+	
+	<!-- 채택 답변인지 확인 -->
 	<select id="isAcceptedAnswer" resultType="boolean">
 		SELECT EXISTS (
 	        SELECT 1 FROM questions q
 	        WHERE q.accepted_answer_id = #{answerId}
 	    )
 	</select>
+
+
+	<!-- 
+	 작성자 본인이고, 삭제되지 않았고,
+	 TEAM 질문이면 현재도 팀원인 경우에만 삭제를 허용한다. (updateContent와 동일 패턴)
+	 채택 여부(자기 자신 + 뿌리 답변 기준)는 Service의 findRootAnswerId + isAcceptedAnswer로 별도 검증한다.
+	-->
+	<update id="softDeleteAnswer">
+	    UPDATE answers a
+	    JOIN questions q ON a.question_id = q.id
+	    SET a.delflag = 'Y'
+	    WHERE a.id = #{id}
+	      AND a.writer_id = #{writerId}
+	      AND a.delflag = 'N'
+	      AND (q.visibility = 'PUBLIC'
+	           OR (q.visibility = 'TEAM' AND EXISTS (
+	               SELECT 1 FROM team_members tm
+	               WHERE tm.team_id = q.team_id AND tm.user_id = #{writerId} AND tm.delflag = 'N')))
+	</update>
 	
+	
+	<!-- 
+	 하위 댓글/대댓글을 재귀적으로 모두 소프트 삭제한다. (cascade)
+	 정상 흐름에서는 괜찮지만 depth 3+ 가 비정상적으로 존재할 가능성까지 
+	 방어하기 위해 재귀 CTE로 끝까지 타고 내려간다.
+	 작성자 무관, 권한/채택 체크는 최상위 대상에서 이미 끝났으므로 생략.
+	 WITH RECURSIVE는 MySQL 8.0부터 지원해서 주의 필요
+	-->
+	<update id="softDeleteDescendants">
+	    UPDATE answers a
+	    JOIN (
+	        WITH RECURSIVE descendants AS (
+	            SELECT id FROM answers WHERE parent_answer_id = #{id} AND delflag = 'N'
+	            UNION ALL
+	            SELECT ans.id
+	            FROM answers ans
+	            JOIN descendants d ON ans.parent_answer_id = d.id
+	            WHERE ans.delflag = 'N'
+	        )
+	        SELECT id FROM descendants
+	    ) AS desc_ids ON a.id = desc_ids.id
+	    SET a.delflag = 'Y'
+	    WHERE a.delflag = 'N'
+	</update>
 
 </mapper>

@@ -35,4 +35,13 @@ public interface AnswerMapper {
 	
 	// questions.accepted_answer_id가 이 답변 id와 일치하는지 확인한다.
 	boolean isAcceptedAnswer(@Param("answerId") Long answerId);
+	
+	/* 
+	 * 삭제 요청 대상(답변/댓글/대댓글) 자체를 소프트 삭제한다. 
+	 * 작성자 본인 여부, 팀원 여부까지 WHERE절에서 검증한다 (updateContent와 동일 패턴).
+	 */
+	int softDeleteAnswer(@Param("id") Long id, @Param("writerId") Long writerId);
+	
+	// 삭제 대상의 하위 댓글/대댓글을 작성자 무관하게 일괄 소프트 삭제한다. (cascade)
+	int softDeleteDescendants(@Param("id") Long id);
 }

@@ -179,6 +179,10 @@ public class AnswerService {
 		int updated = answerMapper.updateContent(id, writerId, content);
 		
 		if(updated == 0) {
+			/* 
+			 * 작성자 확인을 이미 통과했는데도 0건이면 TEAM 질문에서 팀 탈퇴로 권한을 잃었거나, 
+			 * 동시 요청으로 상태가 바뀐 경우
+			 */
 			throw new BusinessException("내용을 수정할 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
 		}
 	}
@@ -203,6 +207,51 @@ public class AnswerService {
 		
 		return findRootAnswerId(parent);
 	}
+	
+	
+	// 답변/댓글/대댓글 삭제 (soft delete). 하위 댓글/대댓글까지 cascade 삭제한다.
+	@Transactional
+	public void deleteAnswer(Long id, Long writerId) {
+		
+		AnswerEntity answer = answerMapper.findAnswerById(id);
+		
+		if(answer == null) {
+			throw new BusinessException("답변을 찾을 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		if(!answer.getWriterId().equals(writerId)) {
+			throw new BusinessException("작성자만 삭제할 수 있습니다", ErrorCode.FORBIDDEN);
+		}
+		
+		/*
+		 * 최상위 답변(depth=0)까지 거슬러 올라가서, 그 답변이 채택되었는지 확인한다.
+		 * 채택된 답변뿐 아니라 그 아래 댓글/대댓글도 함께 삭제를 제한한다.
+		 * (updateContent와 동일한 findRootAnswerId 재사용)
+		 */
+		Long rootAnswerId = findRootAnswerId(answer);
+		boolean isAccepted = answerMapper.isAcceptedAnswer(rootAnswerId);
+		
+		if(isAccepted) {
+			throw new BusinessException("채택된 답변과 그에 달린 댓글/대댓글은 삭제할 수 없습니다", ErrorCode.ACCEPTED_ANSWER_CANNOT_DELETE);
+		}
+		
+		int deleted = answerMapper.softDeleteAnswer(id, writerId);
+		
+		if(deleted == 0) {
+			/* 
+			 * 작성자 확인을 이미 통과했는데도 0건이면 TEAM 질문에서 팀 탈퇴로 권한을 잃었거나, 
+			 * 동시 요청으로 상태가 바뀐 경우 (updateContent와 동일하게 처리)
+			 */
+			throw new BusinessException("삭제할 수 없습니다", ErrorCode.ANSWER_NOT_FOUND);
+		}
+		
+		// 하위 댓글/대댓글도 함께 소프트 삭제 (작성자 무관 cascade)
+		answerMapper.softDeleteDescendants(id);
+		
+	}
+	
+	
+	
 	
 	
 	

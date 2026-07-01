@@ -2,6 +2,7 @@ package com.min.edu.answer;
 
 import java.util.List;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -99,6 +100,19 @@ public class AnswerController {
 	    
 	    answerService.updateContent(answerId, writerId, request.getContent());
 	    return ApiResponse.success("수정이 완료되었습니다.");
+	}
+	
+	
+	// 답변/댓글/대댓글 공통 삭제 (depth 상관없이 동일 엔드포인트)
+	@DeleteMapping("/api/answers/{answerId}")
+	public ApiResponse<Void> deleteAnswer(@PathVariable Long answerId) {
+		
+		// TODO: JWT 인증 구현 후 현재 로그인 사용자 ID를 SecurityContext에서 가져오도록 수정
+	    Long writerId = 1L;
+	    
+	    answerService.deleteAnswer(answerId, writerId);
+	    
+	    return ApiResponse.success("삭제가 완료되었습니다.");
 	}
 
 }
