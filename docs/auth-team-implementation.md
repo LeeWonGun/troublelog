@@ -93,6 +93,3 @@ SMTP_PASSWORD=your-google-app-password
 - HTTPS 운영 환경에서는 `JWT_COOKIE_SECURE=true`를 사용해야 한다.
 - 쿠키 기반 전달이므로 CSRF 토큰 적용을 추가로 고려해야 한다.
 
-## 9. 발표용 요약
-
-회원 기능에서는 이메일 기반 회원가입과 로그인을 구현했고, 비밀번호는 BCrypt로 암호화해 저장했습니다. 인증 방식은 JWT 기반이지만, JWT를 프론트에 직접 노출하지 않기 위해 `HttpOnly Cookie`로 전달합니다. 로그인 성공 시 서버가 JWT를 생성해 `ACCESS_TOKEN` 쿠키로 내려주고, 이후 요청에서는 백엔드 필터가 쿠키의 JWT를 검증해 현재 사용자를 식별합니다.
