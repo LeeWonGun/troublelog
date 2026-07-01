@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useAppContext } from '../context/AppContext.jsx'
 import { QLIST } from '../constants/actionTypes.js'
 import SearchBar from '../components/common/SearchBar.jsx'

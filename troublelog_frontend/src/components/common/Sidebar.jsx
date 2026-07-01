@@ -87,8 +87,8 @@ function Sidebar() {
             <div className={`team-list ${teamListOpen ? 'open' : ''}`}>
               {teams.map(t => (
                 <button
-                  key={t.id}
-                  className={`nav-item ${isBoard && activeTeam === t.id ? 'active' : ''}`}
+                  key={t.teamId}
+                  className={`nav-item ${isBoard && activeTeam === t.teamId ? 'active' : ''}`}
                   onClick={() => handleTeamNav(t.id)}
                 >
                   <span className="dot" /> {t.name}

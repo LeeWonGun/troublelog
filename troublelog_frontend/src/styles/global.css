@@ -319,6 +319,11 @@ input, textarea, select { font-family: inherit; }
   color: var(--text-muted);
 }
 .field-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.field-label--with-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 .field-block { margin-bottom: 16px; }
 .field-block p { margin: 0; font-size: 13.5px; color: var(--text-secondary); white-space: pre-wrap; }
 .attach-box {
@@ -374,6 +379,9 @@ input, textarea, select { font-family: inherit; }
 /* 유효성 에러 상태 인풋 테두리 */
 .input--error { border-color: var(--danger) !important; }
 .input--error:focus { border-color: var(--danger) !important; }
+.input--success { border-color: var(--success) !important; }
+.input--success:focus { border-color: var(--success) !important; }
+.input:disabled { background: var(--bg-surface); opacity: 0.7; cursor: not-allowed; }
 
 /* 인풋 하단 에러 메시지 */
 .error-msg { font-size: 12px; color: var(--danger); margin-top: 5px; }

@@ -1,18 +1,20 @@
 import { useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CHANGE_PASS } from '../constants/actionTypes'
-import { authEmail } from '../api/authApi'
-import { updatePassword } from '../api/userApi'
+import { sendPasswordResetCode, verifyPasswordResetCode, resetPasswordByEmail } from '../api/authApi'
 import { requestHandler } from '../util/requestHandler'
+import { onlyDigits } from '../util/inputFilters'
+import { isValidPassword } from '../util/inputFilters.js'
 
 const initialState = {
   email: '',
   emailCode: '',
-  showCodeSection: false, // 인증 코드 입력 섹션 표시 여부
+  showCodeSection: false,  // 인증 코드 입력 섹션 표시 여부
   emailVerified: false,    // 이메일 인증 완료 여부
   newPassword: '',
   newPasswordConfirm: '',
   emailError: '',
+  emailCodeError: '',      // 인증 코드 오류 메시지
   passwordError: '',
   error: '',
 }
@@ -22,9 +24,9 @@ function reducer(state, action) {
     case CHANGE_PASS.SET_FIELD: {
       const base = { ...state, error: '', [action.field]: action.value, }
 
-      // 이메일이 바뀌면 인증 상태 초기화 (재인증 필요)
+      // 이메일이 바뀌면 인증 상태 전체 초기화 (재인증 필요)
       if (action.field === 'email') {
-        return { ...base, emailVerified: false, showCodeSection: false }
+        return { ...base, emailCode: '', emailVerified: false, showCodeSection: false }
       }
 
       return base
@@ -33,6 +35,8 @@ function reducer(state, action) {
       return { ...state, error: action.payload }
     case CHANGE_PASS.SHOW_CODE:
       return { ...state, showCodeSection: true }
+    case CHANGE_PASS.SET_VERIFIED:
+      return { ...state, emailVerified: action.payload }
     default:
       return state
   }
@@ -41,7 +45,13 @@ function reducer(state, action) {
 function ResetPasswordPage() {
   const navigate = useNavigate()
   const [state, dispatch] = useReducer(reducer, initialState)
-  const set = field => e => dispatch({ type: 'SET_FIELD', field, value: e.target.value })
+  const set = field => e => dispatch({ type: CHANGE_PASS.SET_FIELD, field, value: e.target.value })
+
+  const newPasswordInvalid = state.newPassword.length > 0 && !isValidPassword(state.newPassword)
+  const newPasswordMismatch = state.newPasswordConfirm.length > 0 && state.newPassword !== state.newPasswordConfirm
+
+  // "비밀번호 변경" 버튼 활성화 조건: 이메일 인증 성공 + 새 비밀번호 정책 통과 + 확인값 일치
+  const canSubmit = state.emailVerified && isValidPassword(state.newPassword) && !newPasswordMismatch
 
   // 이메일 인증 코드 발송 요청
   async function handleSendCode() {
@@ -51,20 +61,54 @@ function ResetPasswordPage() {
       return
     }
 
-    await requestHandler(() => authEmail({ userId: state.email, password: state.password }), {
-      onSuccess: () => dispatch({ type: CHANGE_PASS.SHOW_CODE }),
+    await requestHandler(() => sendPasswordResetCode({ email: state.email }), {
+      onSuccess: () => {
+        dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'emailError', value: '' })
+        dispatch({ type: CHANGE_PASS.SHOW_CODE })
+      },
       onFail: (message) => dispatch({ type: CHANGE_PASS.SET_ERROR, payload: message }),
       fallbackMessage: '이메일 인증 중 에러가 발생했습니다.',
     })
   }
 
+  // 이메일 인증 코드 확인
+  async function handleVerifyCode() {
+    if (!state.emailCode) {
+      dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'emailCodeError', value: '인증 코드를 입력하세요.' })
+      return
+    }
+
+    await requestHandler(() => verifyPasswordResetCode({ email: state.email, code: state.emailCode }), {
+      onSuccess: () => {
+        dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'emailCodeError', value: '' })
+        dispatch({ type: CHANGE_PASS.SET_VERIFIED, payload: true })
+      },
+      onFail: (message) => dispatch({ type: CHANGE_PASS.SET_ERROR, payload: message }),
+      fallbackMessage: '인증 코드 확인 중 에러가 발생했습니다.',
+    })
+  }
+
   async function handleResetPassword() {
+    if (!state.emailVerified) {
+      dispatch({ type: CHANGE_PASS.SET_ERROR, payload: '이메일 인증을 먼저 완료해 주세요.' })
+      return
+    }
+
+    if (!isValidPassword(state.newPassword)) {
+      dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'passwordError', value: '비밀번호는 영문, 숫자, 특수문자를 모두 포함해 8자 이상이어야 합니다.' })
+      return
+    }
+
     if (state.newPassword !== state.newPasswordConfirm) {
       dispatch({ type: CHANGE_PASS.SET_FIELD, field: 'passwordError', value: '비밀번호 확인이 일치하지 않습니다.' })
       return
     }
 
-    await requestHandler(() => updatePassword({ newPassword: state.newPassword }), {
+    await requestHandler(() => resetPasswordByEmail({
+      email: state.email,
+      verificationCode: state.emailCode,
+      newPassword: state.newPassword,
+    }), {
       onSuccess: () => navigate('/login'),
       onFail: (message) => dispatch({ type: CHANGE_PASS.SET_ERROR, payload: message }),
       fallbackMessage: '비밀번호 변경 중 에러가 발생했습니다.',
@@ -104,7 +148,14 @@ function ResetPasswordPage() {
                 className="input"
                 placeholder="인증 코드 입력"
                 value={state.emailCode}
-                onChange={set('emailCode')}
+                onChange={e => dispatch({
+                  type: CHANGE_PASS.SET_FIELD,
+                  field: 'emailCode',
+                  value: onlyDigits(e.target.value).slice(0, 6),
+                })}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
               />
               <button className="btn btn-ghost btn-sm">인증 확인</button>
             </div>
@@ -115,31 +166,42 @@ function ResetPasswordPage() {
         <div className="form-group">
           <label>새 비밀번호</label>
           <input
-            className="input"
+            className={`input${newPasswordInvalid ? ' input--error' : ''}`}
             type="password"
             placeholder="새 비밀번호 입력"
             value={state.newPassword}
             onChange={set('newPassword')}
           />
           <div className="hint">* 8자 이상, 영문+숫자+특수문자 조합</div>
+          {newPasswordInvalid && (
+            <div className="error-msg">영문, 숫자, 특수문자를 모두 포함해 8자 이상 입력하세요.</div>
+          )}
         </div>
 
         {/* 새 비밀번호 확인 */}
         <div className="form-group">
           <label>새 비밀번호 확인</label>
           <input
-            className="input"
+            className={`input${newPasswordMismatch ? ' input--error' : ''}`}
             type="password"
             placeholder="새 비밀번호 확인"
             value={state.newPasswordConfirm}
             onChange={set('newPasswordConfirm')}
           />
-          {state.passwordError && <div className="error-msg">{state.passwordError}</div>}
+          {(newPasswordMismatch || state.passwordError) && (
+            <div className="error-msg">
+              {state.passwordError || '비밀번호 확인이 일치하지 않습니다.'}
+            </div>
+          )}
         </div>
 
         {state.error && <div className="alert-banner">{state.error}</div>}
 
-        <button className="btn btn-primary btn-block" onClick={handleResetPassword}>
+        <button
+          className="btn btn-primary btn-block"
+          onClick={handleResetPassword}
+          disabled={!canSubmit}
+        >
           비밀번호 변경
         </button>
 
@@ -152,11 +214,3 @@ function ResetPasswordPage() {
 }
 
 export default ResetPasswordPage
-
-/*
- * [고려한 예외 처리 및 보안 사항]
- * - 이메일 형식 클라이언트 검증 후 서버 전송 (서버 측 재검증 필수)
- * - 인증 코드 발송 후 코드 섹션 노출 (초기엔 hidden)
- * - 비밀번호 확인 불일치 시 UI 오류 메시지 표시
- * - 실제 구현 시: 인증 코드 만료 시간(5분), Rate Limiting, 토큰 기반 재설정 등 서버 정책 적용 필요
- */

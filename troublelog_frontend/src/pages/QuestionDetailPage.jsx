@@ -118,11 +118,9 @@ function QuestionDetailPage() {
 
         {(question.codeLanguage || question.code) && (
           <div className="field-block">
-            <div className="field-label">오류 코드</div>
-            <div className="code-toolbar">
-              <span className="code-lang-pill">
-                {question.codeLanguage || 'text'}
-              </span>
+            <div className="field-label field-label--with-pill">
+              <span>오류 코드</span>
+              <span className="code-lang-pill">{question.codeLanguage || 'text'}</span>
             </div>
             <MarkdownHighlighter
               markdown={codeMarkdown}
@@ -157,10 +155,10 @@ function QuestionDetailPage() {
             className={`icon-btn ${state.liked ? 'liked' : ''}`}
             onClick={() => dispatch({ type: QDETAIL.TOGGLE_POST_LIKE })}
           >
-            {state.liked ? '&#9829;' : '&#9825;'} 좋아요 {state.likeCount}
+            {state.liked ? '♥' : '♡'} 좋아요 {state.likeCount}
           </button>
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* 작성자 본인일 때만 수정 버튼 표시 (목업 P-FE-BD-10) */}
+            
             {isAuthor && (
               <button
                 className="btn btn-ghost btn-sm"
