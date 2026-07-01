@@ -31,7 +31,7 @@ public class TechStack {
     private String category;
 
     // 비활성화된 기술 스택은 작성/검색 화면에 노출하지 않는다.
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private Boolean active;
 
     @Column(name = "created_at", nullable = false)
