@@ -5,6 +5,9 @@ import SearchBar from '../components/common/SearchBar.jsx'
 import PostRow from '../components/common/PostRow.jsx'
 import Pagination from '../components/common/Pagination.jsx'
 import questionListReducer, { initialState } from '../reducers/questionListReducer.js'
+import { getPublicQuestions, searchPublicQuestions } from '../api/questionApi.js'
+import { requestHandler } from '../util/requestHandler.js'
+import { mapQuestionListItem } from '../util/questionMapper.js'
 import { MOCK_BOARD_POSTS } from '../constants/mockData.js'
 
 const PAGE_SIZE = 5
@@ -16,16 +19,56 @@ function QuestionListPage() {
 
   const teamInfo = teams.find(t => t.id === activeTeam)
 
-  // 정렬 및 상태 필터는 sort-row 에서 처리
-  const filtered = MOCK_BOARD_POSTS
-    .filter(p => activeTeam ? p.team === activeTeam : p.visibility === 'PUBLIC')
+  //TODO: 팀 목록/검색 API 연동 필요
+  useEffect(() => {
+    if (activeTeam) return
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((state.currentPage - 1) * PAGE_SIZE, state.currentPage * PAGE_SIZE)
+    let ignore = false // 정렬/검색어/페이지가 빠르게 바뀔 때 늦게 도착한 응답이 최신 상태를 덮어쓰지 않도록 막는 가드
+
+    dispatch({ type: QLIST.SET_LOADING })
+
+    const trimmedKeyword = state.keyword.trim()
+    const commonParams = {
+      sort: state.sortBy.toUpperCase(), // 'latest' -> 'LATEST' (백엔드 sort enum: LATEST | POPULAR | SOLVED | UNSOLVED)
+      page: state.currentPage - 1,      // 화면은 1-based, API는 0-based
+      size: PAGE_SIZE,
+    }
+
+    // 검색어가 있으면 검색 API(searchPublicQuestions), 없으면 공개 목록 API(getPublicQuestions)를 호출한다.
+    const apiCall = trimmedKeyword
+      ? () => searchPublicQuestions({ ...commonParams, keyword: trimmedKeyword })
+      : () => getPublicQuestions(commonParams)
+
+    requestHandler(apiCall, {
+      isCancelled: () => ignore,
+      onSuccess: (data) => dispatch({
+        type: QLIST.SET_POSTS,
+        payload: {
+          posts: (data.content ?? []).map(mapQuestionListItem),
+          totalPages: data.totalPages,
+        },
+      }),
+      onFail: (message) => dispatch({ type: QLIST.SET_ERROR, payload: message }),
+      fallbackMessage: '게시글 목록을 불러오지 못했습니다.',
+    })
+
+    return () => { ignore = true }
+  }, [activeTeam, state.sortBy, state.currentPage, state.keyword])
+
+  // 목업 기반 팀 게시판 (팀 전용 API 연동 전까지 유지)
+  const mockFiltered = MOCK_BOARD_POSTS
+    .filter(p => activeTeam ? p.team === activeTeam : p.visibility === 'PUBLIC')
+  const mockTotalPages = Math.max(1, Math.ceil(mockFiltered.length / PAGE_SIZE))
+  const mockPaginated = mockFiltered.slice((state.currentPage - 1) * PAGE_SIZE, state.currentPage * PAGE_SIZE)
+
+  const totalPages = activeTeam ? mockTotalPages : state.totalPages
 
   return (
     <div className="main">
-      <SearchBar placeholder="제목, 내용으로 검색" />
+      <SearchBar
+        placeholder="제목, 내용으로 검색"
+        onSearch={() => dispatch({ type: QLIST.SET_KEYWORD, payload: searchKeyword })}
+      />
 
       <div className="page-head">
         <h1>
@@ -34,9 +77,8 @@ function QuestionListPage() {
         </h1>
       </div>
 
-      {/* sort-row: 목업 기준 정렬/상태 필터 (filter-bar pill UI 는 목업에 없으므로 제거) */}
       <div className="sort-row">
-        {[['latest', '최신순'], ['popular', '인기순'], ['solved', '해결된 글'], ['unsolved', '미해결 글']].map(([val, label]) => (
+        {[['LATEST', '최신순'], ['POPULAR', '인기순'], ['SOLVED', '해결된 글'], ['UNSOLVED', '미해결 글']].map(([val, label]) => (
           <span
             key={val}
             className={state.sortBy === val ? 'active' : ''}
@@ -47,10 +89,19 @@ function QuestionListPage() {
         ))}
       </div>
 
-      {paginated.length > 0
-        ? paginated.map(p => <PostRow key={p.id} post={p} />)
-        : <div className="panel" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>등록된 게시글이 없습니다.</div>
-      }
+      {activeTeam ? (
+        mockPaginated.length > 0
+          ? mockPaginated.map(p => <PostRow key={p.id} post={p} />)
+          : <div className="panel" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>등록된 게시글이 없습니다.</div>
+      ) : state.loading ? (
+        <div className="panel" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>불러오는 중...</div>
+      ) : state.error ? (
+        <div className="panel" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{state.error}</div>
+      ) : state.posts.length > 0 ? (
+        state.posts.map(p => <PostRow key={p.id} post={p} />)
+      ) : (
+        <div className="panel" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>등록된 게시글이 없습니다.</div>
+      )}
 
       <Pagination
         current={state.currentPage}

@@ -15,6 +15,9 @@ export const initialState = {
 
 const questionListReducer = (state, action) => {
   switch (action.type) {
+    case QLIST.SET_LOADING:
+      return { ...state, loading: true, error: null }
+
     case QLIST.SET_ERROR:
       return { ...state, loading: false, error: action.payload }
 
@@ -22,13 +25,16 @@ const questionListReducer = (state, action) => {
       return {
         ...state,
         posts: action.payload.posts,
-        totalPages: action.payload.totalPages,
+        totalPages: Math.max(1, action.payload.totalPages),
         loading: false,
         error: null,
       }
 
     case QLIST.SET_SORT:
       return { ...state, sortBy: action.payload, currentPage: 1 }
+
+    case QLIST.SET_KEYWORD:
+      return { ...state, keyword: action.payload, currentPage: 1 }
 
     case QLIST.TOGGLE_TAG_FILTER: {
       const tags = state.filterTags.includes(action.payload)

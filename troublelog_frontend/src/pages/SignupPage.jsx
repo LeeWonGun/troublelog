@@ -1,7 +1,8 @@
 import { useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SIGNUP } from '../constants/actionTypes.js'
-import { checkNickname, signup } from '../api/authApi.js'
+import { authEmail, checkNickname, signup } from '../api/authApi.js'
+import { requestHandler } from '../util/requestHandler.js'
 
 const initialState = {
   email: '',
@@ -52,37 +53,32 @@ function SignupPage() {
   const canSubmit = state.emailVerified && state.nicknameChecked
   const passwordMismatch = state.passwordConfirm.length > 0 && state.password !== state.passwordConfirm
 
-  async function handleSendCode() {
+    async function handleSendCode() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(state.email)) {
       dispatch({ type: SIGNUP.SET_FIELD, field: 'emailError', value: '올바른 이메일 형식으로 입력하세요.' })
       return
     }
 
-    try {
-      const res = await authEmail({ userId: state.email, password: state.password })
-      if (res.success) {
-        dispatch({ type: SIGNUP.SHOW_CODE })
-      } else {
-        dispatch({ type: SIGNUP.SET_ERROR, payload: res.message })
-      }
-    } catch {
-      dispatch({ type: SIGNUP.SET_ERROR, payload: '이메일 인증 중 에러가 발생했습니다.' })
-    }
+    await requestHandler(() => authEmail({ userId: state.email, password: state.password }), {
+      onSuccess: () => dispatch({ type: SIGNUP.SHOW_CODE }),
+      onFail: (message) => dispatch({ type: SIGNUP.SET_ERROR, payload: message }),
+      fallbackMessage: '이메일 인증 중 에러가 발생했습니다.',
+    })
   }
 
   async function handleCheckNickname() {
-    try {
-      const res = await checkNickname({ nickname: state.nickname })
-
-      if (res.data) {
-        dispatch({ type: SIGNUP.SET_NICKNAME_CHECKED, payload: true })
-      } else {
-        dispatch({ type: SIGNUP.SET_ERROR, payload: res.message })
-      }
-    } catch {
-      dispatch({ type: SIGNUP.SET_ERROR, payload: '닉네임 중복 확인 중 에러가 발생했습니다.' })
-    }
+    await requestHandler(() => checkNickname({ nickname: state.nickname }), {
+      onSuccess: (available, res) => {
+        if (available) {
+          dispatch({ type: SIGNUP.SET_NICKNAME_CHECKED, payload: true })
+        } else {
+          dispatch({ type: SIGNUP.SET_ERROR, payload: res.message })
+        }
+      },
+      onFail: (message) => dispatch({ type: SIGNUP.SET_ERROR, payload: message }),
+      fallbackMessage: '닉네임 중복 확인 중 에러가 발생했습니다.',
+    })
   }
 
   async function handleSignup() {
@@ -91,12 +87,11 @@ function SignupPage() {
       return
     }
 
-    try {
-      await signup({ userId: state.email, password: state.password })
-      navigate('/')
-    } catch {
-      dispatch({ type: SIGNUP.SET_ERROR, payload: '이메일 또는 비밀번호가 올바르지 않습니다.' })
-    }
+    await requestHandler(() => signup({ userId: state.email, password: state.password }), {
+      onSuccess: () => navigate('/'),
+      onFail: (message) => dispatch({ type: SIGNUP.SET_ERROR, payload: message }),
+      fallbackMessage: '회원가입 중 에러가 발생했습니다.',
+    })
   }
 
   return (

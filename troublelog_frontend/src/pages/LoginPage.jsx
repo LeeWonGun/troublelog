@@ -2,6 +2,7 @@ import { useReducer } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LOGIN } from '../constants/actionTypes.js'
 import { login } from '../api/authApi.js'
+import { requestHandler } from '../util/requestHandler.js'
 
 const initialState = { id: '', password: '', error: '' }
 
@@ -30,12 +31,10 @@ function LoginPage() {
       return
     }
 
-    try {
-      await login({ userId: state.id, password: state.password })
-      navigate('/')
-    } catch {
-      dispatch({ type: LOGIN.SET_ERROR, payload: '이메일 또는 비밀번호가 올바르지 않습니다.' })
-    }
+    await requestHandler(() => login({ email: state.id, password: state.password }), {
+      onSuccess: () => navigate('/'),
+      onFail: () => dispatch({ type: LOGIN.SET_ERROR, payload: '이메일 또는 비밀번호가 올바르지 않습니다.' }),
+    })
   }
 
   async function handleGoogleLogin() {

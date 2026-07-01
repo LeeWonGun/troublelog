@@ -78,7 +78,25 @@ INSERT INTO questions
 VALUES
     (1, 1, NULL, NULL,
     'Spring Boot 서버 실행 시 8080 포트 충돌 문제',
-    'Spring Boot 서버를 실행하려고 하는데 8080 포트가 이미 사용 중이라는 오류가 발생합니다. 어떤 프로세스가 포트를 사용 중인지 확인하고 종료하는 방법이 궁금합니다.',
+    'Spring Boot 서버를 실행하려고 하는데 8080 포트가 이미 사용 중이라는 오류가 발생합니다. 어떤 프로세스가 포트를 사용 중인지 확인하고 종료하는 방법이 궁금합니다.
+        ```javascript
+        import { useEffect, useState } from ''react''
+
+        export default function Board() {
+        const [count, setCount] = useState(0)
+        const options = { limit: 10 }
+
+        useEffect(() => {
+            fetch(''/api/posts?limit='' + options.limit)
+            .then(res => res.json())
+            .then(() => {
+                setCount(prev => prev + 1)
+            })
+        }, [options])
+
+        return <div>{count}</div>
+        }
+        ```',
     'Port 8080 was already in use',
     'Windows 11, Java 21, Spring Boot 4, IntelliJ',
     'netstat으로 포트를 확인해보려고 했지만 어떤 프로세스를 종료해야 하는지 모르겠습니다.',

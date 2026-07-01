@@ -267,11 +267,60 @@ input, textarea, select { font-family: inherit; }
 .code-block {
   background: var(--bg-base); border: 1px solid var(--border); border-radius: var(--radius-sm);
   padding: 14px 16px; font-family: var(--font-mono); font-size: 12.5px; color: var(--warn);
-  overflow-x: auto; margin: 14px 0; line-height: 1.7;
+  overflow-x: auto; margin: 14px 0; line-height: 1.7; white-space: pre-wrap;
+}
+.code-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+.code-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-surface-2);
+  color: var(--blue-bright);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.markdown-render {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.markdown-render p,
+.markdown-render ul,
+.markdown-render ol,
+.markdown-render pre,
+.markdown-render blockquote {
+  margin: 0 0 12px;
+}
+.markdown-render pre {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  overflow-x: auto;
+}
+.markdown-render pre code.hljs {
+  display: block;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  background: transparent;
+}
+.markdown-empty {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
 }
 .field-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
 .field-block { margin-bottom: 16px; }
-.field-block p { margin: 0; font-size: 13.5px; color: var(--text-secondary); }
+.field-block p { margin: 0; font-size: 13.5px; color: var(--text-secondary); white-space: pre-wrap; }
 .attach-box {
   width: 160px; height: 100px; border: 1px dashed var(--border); border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;

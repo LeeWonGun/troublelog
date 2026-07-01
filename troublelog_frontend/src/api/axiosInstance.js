@@ -1,5 +1,6 @@
 
 import axios from 'axios'
+import { AUTH_PAGE_PATHS } from '../constants/routePaths.js'
 
 // 서버 BASE URL - 환경변수로 관리
 const axiosInstance = axios.create({
@@ -55,15 +56,19 @@ axiosInstance.interceptors.response.use(
   (response) => {
     decrementLoading()
 
-    console.log("[response]", res.data);
+    console.log("[response]", response.data);
 
-    return res.data;
+    return response.data;
   },
   (error) => {
     decrementLoading()
 
-    console.log("[response error]", err);
-    if (error.response?.status === 401) {
+    console.log("[response error]", error);
+    
+    const skipAuthRedirect = error.config?.skipAuthRedirect
+    const isOnAuthPage = typeof window !== 'undefined' && AUTH_PAGE_PATHS.includes(window.location.pathname)
+
+    if (error.response?.status === 401 && !skipAuthRedirect && !isOnAuthPage) {
       window.location.href = '/login'
     }
     return Promise.reject(error)

@@ -4,6 +4,8 @@ import SearchBar from '../components/common/SearchBar.jsx'
 import StatusChip from '../components/common/StatusChip.jsx'
 import PostRow from '../components/common/PostRow.jsx'
 import { getPopularQuestions, getPublicQuestions } from '../api/questionApi.js'
+import { requestHandler } from '../util/requestHandler.js'
+import { mapQuestionListItem } from '../util/questionMapper.js'
 
 // 인기 게시글 랭킹 아이템
 function RankItem({ post, rank, onClick }) {
@@ -24,22 +26,23 @@ function HomePage() {
   const [publicPosts, setPublicPosts] = useState([])
 
   useEffect(() => {
-    const fetchHome = async () => {
-      try {
-        // 인기글 + 공개 게시글 병렬 fetch
-        const [popularRes, publicRes] = await Promise.all([
-          getPopularQuestions(),
-          getPublicQuestions({ page: 0, size: 4 }),
-        ])
+    let ignore = false
 
-        setPopularPosts(popularRes ?? [])
-        setPublicPosts(publicRes?.content ?? [])
-      } catch (e) {
-        console.error('홈 데이터 로드 실패', e)
-      }
-    }
+    //TODO: 인기 게시글 조회 (BE 미구현 API - 추후 확인)
+    requestHandler(() => getPopularQuestions(), {
+      isCancelled: () => ignore,
+      onSuccess: (data) => setPopularPosts(data ?? []),
+      onFail: (message) => console.error('인기 게시글 로드 실패:', message),
+    })
 
-    fetchHome()
+    // 전체 게시글 목록 조회
+    requestHandler(() => getPublicQuestions({ page: 0, size: 5 }), {
+      isCancelled: () => ignore,
+      onSuccess: (data) => setPublicPosts((data.content ?? []).map(mapQuestionListItem)),
+      onFail: (message) => console.error('전체 게시글 로드 실패:', message),
+    })
+
+    return () => { ignore = true }
   }, [])
 
   return (

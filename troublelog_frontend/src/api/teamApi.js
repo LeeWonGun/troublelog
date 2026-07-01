@@ -11,7 +11,7 @@ export const joinTeam = (teamCode) =>
 
 // GET /api/teams/my - 내 팀 목록 (탈퇴/삭제 팀 제외)
 export const getMyTeams = () =>
-  axiosInstance.get('/api/teams/my')
+  axiosInstance.get('/api/teams/my', { skipAuthRedirect: true })
 
 // GET /api/teams/{teamId} - 팀 상세 조회
 export const getTeam = (teamId) =>

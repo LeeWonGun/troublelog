@@ -1,18 +1,20 @@
 import axiosInstance from './axiosInstance.js'
 
-// GET /api/questions/public - 전체 공개 질문 목록 (비회원 가능)
-// params: { page, size, sort }
+// GET /api/questions/public - 전체 공개 질문 목록 (비회원 가능, 페이징 적용)
+// params: { page, size, sort } - sort: LATEST | POPULAR | SOLVED | UNSOLVED (기본값 LATEST)
+// 응답 data: PageResponse<QuestionListResponse> = { content, page, size, totalElements, totalPages, hasNext }
 export const getPublicQuestions = (params) =>
-  axiosInstance.get('/api/questions/public', { params })
+  axiosInstance.get('/api/questions/public', { params, skipAuthRedirect: true })
 
 // GET /api/questions/popular - 인기 게시글 (좋아요 순)
 export const getPopularQuestions = () =>
-  axiosInstance.get('/api/questions/popular')
+  axiosInstance.get('/api/questions/popular', { skipAuthRedirect: true })
 
-// GET /api/questions/search - 질문 검색
-// params: { keyword, stacks, status, page, size }
-export const searchQuestions = (params) =>
-  axiosInstance.get('/api/questions/search', { params })
+// GET /api/questions/search - 전체 공개 게시판 질문 검색 (페이징 적용)
+// params: { keyword, status, techStackIds, sort, page, size }
+// 응답 data: PageResponse<QuestionListResponse> = { content, page, size, totalElements, totalPages, hasNext }
+export const searchPublicQuestions = (params) =>
+  axiosInstance.get('/api/questions/search', { params, skipAuthRedirect: true })
 
 // GET /api/questions/{questionId} - 질문 상세
 export const getQuestion = (questionId) =>

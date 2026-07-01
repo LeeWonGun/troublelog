@@ -26,6 +26,12 @@ export const QLIST = {
   SET_STATUS_FILTER: 'QLIST/SET_STATUS_FILTER',
   RESET_FILTERS:     'QLIST/RESET_FILTERS',
   SET_PAGE:          'QLIST/SET_PAGE',
+  SET_KEYWORD:       'QLIST/SET_KEYWORD',   // 검색 실행(Enter) 시 확정된 검색어를 반영
+
+  // API 연동
+  SET_LOADING:       'QLIST/SET_LOADING',   // 목록/검색 API 요청 시작
+  SET_POSTS:         'QLIST/SET_POSTS',     // 목록/검색 API 요청 성공
+  SET_ERROR:         'QLIST/SET_ERROR',     // 목록/검색 API 요청 실패
 }
 
 export const QDETAIL = {

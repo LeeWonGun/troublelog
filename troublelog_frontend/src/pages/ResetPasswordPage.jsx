@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CHANGE_PASS } from '../constants/actionTypes'
 import { authEmail } from '../api/authApi'
 import { updatePassword } from '../api/userApi'
+import { requestHandler } from '../util/requestHandler'
 
 const initialState = {
   email: '',
@@ -50,16 +51,11 @@ function ResetPasswordPage() {
       return
     }
 
-    try {
-      const res = await authEmail({ userId: state.email, password: state.password })
-      if (res.success) {
-        dispatch({ type: CHANGE_PASS.SHOW_CODE })
-      } else {
-        dispatch({ type: CHANGE_PASS.SET_ERROR, payload: res.message })
-      }
-    } catch {
-      dispatch({ type: CHANGE_PASS.SET_ERROR, payload: '이메일 인증 중 에러가 발생했습니다.' })
-    }
+    await requestHandler(() => authEmail({ userId: state.email, password: state.password }), {
+      onSuccess: () => dispatch({ type: CHANGE_PASS.SHOW_CODE }),
+      onFail: (message) => dispatch({ type: CHANGE_PASS.SET_ERROR, payload: message }),
+      fallbackMessage: '이메일 인증 중 에러가 발생했습니다.',
+    })
   }
 
   async function handleResetPassword() {
@@ -68,16 +64,11 @@ function ResetPasswordPage() {
       return
     }
 
-    try {
-      const res = await updatePassword({ password: state.password })
-      if (res.success) {
-        navigate('/login')
-      } else {
-        dispatch({ type: CHANGE_PASS.SET_ERROR, payload: res.message })
-      }
-    } catch {
-      dispatch({ type: CHANGE_PASS.SET_ERROR, payload: '비밀번호 변경 중 에러가 발생했습니다.' })
-    }
+    await requestHandler(() => updatePassword({ newPassword: state.newPassword }), {
+      onSuccess: () => navigate('/login'),
+      onFail: (message) => dispatch({ type: CHANGE_PASS.SET_ERROR, payload: message }),
+      fallbackMessage: '비밀번호 변경 중 에러가 발생했습니다.',
+    })
   }
 
   return (

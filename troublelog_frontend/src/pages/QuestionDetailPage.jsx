@@ -1,11 +1,15 @@
-import { useReducer } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useReducer } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { QDETAIL } from '../constants/actionTypes.js'
 import { useAppContext } from '../context/AppContext.jsx'
 import StatusChip from '../components/common/StatusChip.jsx'
 import TagRow from '../components/common/TagRow.jsx'
 import questionDetailReducer, { initialState } from '../reducers/questionDetailReducer.js'
 import { MOCK_ANSWERS } from '../constants/mockData.js'
+import { getQuestion } from '../api/questionApi.js'
+import { requestHandler } from '../util/requestHandler.js'
+import { formatDateTime } from '../util/dateUtil.js'
+import MarkdownHighlighter, { normalizeCodeLanguage } from '../components/common/MarkdownHighlighter.jsx'
 
 function CommentBlock({ answerId, commentInput, onInputChange }) {
   if (answerId !== 101) return null
@@ -49,8 +53,41 @@ const MOCK_AUTHOR_ID = 'user_001'
 
 function QuestionDetailPage() {
   const navigate = useNavigate()
+  const { id } = useParams()
   const { state: appState } = useAppContext()
   const [state, dispatch] = useReducer(questionDetailReducer, initialState)
+
+   // 질문 상세 조회 - 라우트 파라미터(id)가 바뀔 때마다 재조회
+  useEffect(() => {
+    let ignore = false // 응답이 늦게 도착했을 때 이전 요청 결과로 state를 덮어쓰지 않기 위한 가드
+
+    requestHandler(() => getQuestion(id), {
+      isCancelled: () => ignore,
+      onSuccess: (data) => dispatch({ type: QDETAIL.SET_QUESTION, payload: data }),
+      onFail: (message) => dispatch({ type: QDETAIL.SET_ERROR, payload: message }),
+      fallbackMessage: '질문을 불러오지 못했습니다.',
+    })
+
+    return () => { ignore = true }
+  }, [id])
+
+  if (state.error || !state.question) {
+    return (
+      <div className="main">
+        <button className="text-link text-link--back" onClick={() => navigate('/board')}>
+          &#8592; 게시판 목록
+        </button>
+        <div className="panel">{state.error ?? '질문을 찾을 수 없습니다.'}</div>
+      </div>
+    )
+  }
+
+  const { question } = state
+
+  const normalizedCodeLanguage = normalizeCodeLanguage(question.codeLanguage)
+  const codeMarkdown = question.code
+    ? `\`\`\`${normalizedCodeLanguage}\n${question.code}\n\`\`\``
+    : ''
 
   // 로그인 상태이고 작성자 본인인 경우에만 수정 버튼 표시
   // TODO: API 연동 시 question.authorId === appState.userId 로 비교
@@ -64,30 +101,52 @@ function QuestionDetailPage() {
 
       <div className="panel">
         <div className="detail-head">
-          <h1>[Spring] 마이페이지 진입 시 500 Internal Server Error</h1>
-          <StatusChip solved={false} />
+          <h1>{question.title}</h1>
+          <StatusChip solved={question.status === 'SOLVED'} />
         </div>
-        <TagRow tags={['JAVA', 'Spring', 'PostgreSQL']} />
+        <TagRow tags={question.techStacks?.map(stack => stack.name) ?? []} />
         <div className="detail-meta">
-          <span>오지민</span><span>2026.06.23 14:20</span>
+          {/* TODO: writerNickname은 회원 구조 연동 전까지 null -> writerId로 임시 표기 */}
+          <span>{question.writerNickname ?? `작성자 #${question.writerId}`}</span>
+          <span>{formatDateTime(question.createdAt)}</span>
         </div>
 
         <div className="field-block">
-          <div className="field-label">상황</div>
-          <p>로그인 직후 마이페이지에 진입하면 500 에러가 발생합니다. 로컬에서는 정상 동작하는데 배포 환경에서만 재현돼요.</p>
+          <div className="field-label">내용</div>
+          <p>{question.content}</p>
         </div>
-        <div className="field-block">
-          <div className="field-label">오류 메시지</div>
-          <div className="code-block">
-            Exception in thread &quot;main&quot; java.lang.NullPointerException:<br />
-            &nbsp;&nbsp;Cannot invoke &quot;User.getUser()&quot; because &quot;user&quot; is null<br />
-            &nbsp;&nbsp;at com.troublelog.mypage.MyPageService.getProfile(MyPageService.java:42)
+
+        {(question.codeLanguage || question.code) && (
+          <div className="field-block">
+            <div className="field-label">오류 코드</div>
+            <div className="code-toolbar">
+              <span className="code-lang-pill">
+                {question.codeLanguage || 'text'}
+              </span>
+            </div>
+            <MarkdownHighlighter
+              markdown={codeMarkdown}
+              emptyText="등록된 오류 코드가 없습니다."
+            />
           </div>
-        </div>
-        <div className="field-block">
-          <div className="field-label">시도한 방법</div>
-          <p>구글링 · 세션 설정값 변경 · 필터 순서 변경 시도</p>
-        </div>
+        )}
+
+        {question.errorMessage && (
+          <div className="field-block">
+            <div className="field-label">오류 메시지</div>
+            <div className="code-block">{question.errorMessage}</div>
+          </div>
+        )}
+
+        {question.tried && (
+          <div className="field-block">
+            <div className="field-label">시도한 방법</div>
+            <p>{question.tried}</p>
+          </div>
+        )}
+
+        {/* TODO: 첨부 이미지: QuestionDetailResponse에 이미지 목록 필드가 없어
+                              fileApi 연동 전까지 임의 목업 표시  */}
         <div className="field-block">
           <div className="field-label">첨부 이미지</div>
           <div className="attach-box">&#128444; 첨부한 사진</div>
@@ -105,7 +164,7 @@ function QuestionDetailPage() {
             {isAuthor && (
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={() => navigate('/questions/edit')}
+                onClick={() => navigate(`/questions/${id}/edit`)}
               >
                 수정
               </button>
@@ -116,7 +175,7 @@ function QuestionDetailPage() {
       </div>
 
       <div className="answers-head">
-        <h2>답변 <span className="count">{MOCK_ANSWERS.length}</span></h2>
+        <h2>답변 <span className="count">{question.answerCount}</span></h2>
       </div>
 
       {MOCK_ANSWERS.map(a => {
