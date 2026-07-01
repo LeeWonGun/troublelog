@@ -84,4 +84,66 @@ public class Question {
     public void increaseViewCount() {
         this.viewCount++;
     }
+
+    public Question(
+            Long writerId,
+            Long teamId,
+            String title,
+            String content,
+            String errorMessage,
+            String environment,
+            String tried,
+            String visibility
+    ) {
+        this.writerId = writerId;
+        this.teamId = teamId;
+        this.title = title;
+        this.content = content;
+        this.errorMessage = errorMessage;
+        this.environment = environment;
+        this.tried = tried;
+        this.visibility = visibility;
+        this.status = "UNSOLVED";
+        this.answerCount = 0;
+        this.likeCount = 0;
+        this.viewCount = 0;
+        this.delflag = "N";
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void update(
+            Long teamId,
+            String title,
+            String content,
+            String errorMessage,
+            String environment,
+            String tried,
+            String visibility
+    ) {
+        this.teamId = teamId;
+        this.title = title;
+        this.content = content;
+        this.errorMessage = errorMessage;
+        this.environment = environment;
+        this.tried = tried;
+        this.visibility = visibility;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void delete() {
+        this.delflag = "Y";
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean isWriter(Long userId) {
+        return this.writerId.equals(userId);
+    }
+
+    public boolean isPublicQuestion() {
+        return "PUBLIC".equals(this.visibility);
+    }
+
+    public boolean isTeamQuestion() {
+        return "TEAM".equals(this.visibility);
+    }
 }
