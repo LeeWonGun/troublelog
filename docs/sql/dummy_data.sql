@@ -78,12 +78,30 @@ INSERT INTO questions
 VALUES
     (1, 1, NULL, NULL,
     'Spring Boot 서버 실행 시 8080 포트 충돌 문제',
-    'Spring Boot 서버를 실행하려고 하는데 8080 포트가 이미 사용 중이라는 오류가 발생합니다. 어떤 프로세스가 포트를 사용 중인지 확인하고 종료하는 방법이 궁금합니다.',
+    'Spring Boot 서버를 실행하려고 하는데 8080 포트가 이미 사용 중이라는 오류가 발생합니다. 어떤 프로세스가 포트를 사용 중인지 확인하고 종료하는 방법이 궁금합니다.
+
+```javascript
+import { useEffect, useState } from ''react''
+
+export default function Board() {
+  const [count, setCount] = useState(0)
+  const options = { limit: 10 }
+
+  useEffect(() => {
+    fetch(''/api/posts?limit='' + options.limit)
+      .then(res => res.json())
+      .then(() => {
+        setCount(prev => prev + 1)
+      })
+  }, [options])
+
+  return <div>{count}</div>
+}
+```',
     'Port 8080 was already in use',
     'Windows 11, Java 21, Spring Boot 4, IntelliJ',
     'netstat으로 포트를 확인해보려고 했지만 어떤 프로세스를 종료해야 하는지 모르겠습니다.',
     'PUBLIC', 'UNSOLVED', 0, 24, 0, 'N', DATE_SUB(NOW(), INTERVAL 5 DAY), NULL),
-
 
     (2, 2, 1, NULL,
      'Docker Compose MySQL 연결 실패',
@@ -131,7 +149,66 @@ VALUES
      NULL,
      'Test',
      'None',
-     'PUBLIC', 'UNSOLVED', 0, 0, 0, 'Y', DATE_SUB(NOW(), INTERVAL 10 DAY), NULL);
+     'PUBLIC', 'UNSOLVED', 0, 0, 0, 'Y', DATE_SUB(NOW(), INTERVAL 10 DAY), NULL),
+
+    (8, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+
+    (9, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+    (10, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+    (11, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+    (12, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+    (13, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+    (14, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL),
+    (15, 1, NULL, NULL,
+     'Flyway V1 수정 후 checksum mismatch 오류',
+     'V1__init_schema.sql을 수정했더니 Spring Boot 실행 시 Flyway checksum mismatch 오류가 발생합니다.',
+     'Validate failed: Migration checksum mismatch for migration version 1',
+     'Spring Boot, Flyway, MySQL, Docker Compose',
+     'docker compose down만 실행하고 다시 서버를 실행했습니다.',
+     'PUBLIC', 'UNSOLVED', 0, 42, 0, 'N', DATE_SUB(NOW(), INTERVAL 2 DAY), NULL);
+     
 
 
 -- =========================================================

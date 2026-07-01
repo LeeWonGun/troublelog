@@ -1,0 +1,85 @@
+// 리듀서별 action type 상수 - string literal 오타 방지 및 중앙 관리
+export const APP = {
+  SET_NICKNAME:            'APP/SET_NICKNAME',
+  TOGGLE_TEAM_LIST:        'APP/TOGGLE_TEAM_LIST',
+  SET_ACTIVE_TEAM:         'APP/SET_ACTIVE_TEAM',
+  OPEN_MODAL:              'APP/OPEN_MODAL',
+  CLOSE_MODAL:             'APP/CLOSE_MODAL',
+  ADD_TEAM:                'APP/ADD_TEAM',
+  REMOVE_TEAM:             'APP/REMOVE_TEAM',
+  LEAVE_TEAM:              'APP/LEAVE_TEAM',
+  SET_SEARCH_KEYWORD:      'APP/SET_SEARCH_KEYWORD',
+  TOGGLE_SEARCH_STACK:     'APP/TOGGLE_SEARCH_STACK',
+  SET_SEARCH_STATUS:       'APP/SET_SEARCH_STATUS',
+  RESET_SEARCH_FILTERS:    'APP/RESET_SEARCH_FILTERS',
+  CLEAR_USER:              'APP/CLEAR_USER',  // 로그아웃 시 사용자 정보 초기화
+
+  // API 연동
+  SET_USER:                'APP/SET_USER',    // 로그인 사용자 정보 세팅
+  SET_TEAMS:               'APP/SET_TEAMS',   // 팀 목록 세팅
+  SET_GLOBAL_LOADING:      'APP/SET_GLOBAL_LOADING', // axios 요청 진행 중 전역 로딩 오버레이
+}
+
+export const QLIST = {
+  SET_SORT:          'QLIST/SET_SORT',
+  TOGGLE_TAG_FILTER: 'QLIST/TOGGLE_TAG_FILTER',
+  SET_STATUS_FILTER: 'QLIST/SET_STATUS_FILTER',
+  RESET_FILTERS:     'QLIST/RESET_FILTERS',
+  SET_PAGE:          'QLIST/SET_PAGE',
+  SET_KEYWORD:       'QLIST/SET_KEYWORD',   // 검색 실행(Enter) 시 확정된 검색어를 반영
+
+  // API 연동
+  SET_LOADING:       'QLIST/SET_LOADING',   // 목록/검색 API 요청 시작
+  SET_POSTS:         'QLIST/SET_POSTS',     // 목록/검색 API 요청 성공
+  SET_ERROR:         'QLIST/SET_ERROR',     // 목록/검색 API 요청 실패
+}
+
+export const QDETAIL = {
+  TOGGLE_POST_LIKE:   'QDETAIL/TOGGLE_POST_LIKE',
+  ACCEPT_ANSWER:      'QDETAIL/ACCEPT_ANSWER',
+  TOGGLE_ANSWER_LIKE: 'QDETAIL/TOGGLE_ANSWER_LIKE',
+  SET_COMMENT_INPUT:  'QDETAIL/SET_COMMENT_INPUT',
+
+  // API 연동
+  SET_QUESTION:       'QDETAIL/SET_QUESTION',
+  SET_ANSWERS:        'QDETAIL/SET_ANSWERS',
+  SET_ERROR:          'QDETAIL/SET_ERROR',
+}
+
+export const WRITE = {
+  SET_FIELD:     'WRITE/SET_FIELD',
+  SET_VISIBILITY:'WRITE/SET_VISIBILITY',
+  TOGGLE_STACK:  'WRITE/TOGGLE_STACK',
+  ADD_IMAGE:     'WRITE/ADD_IMAGE',
+  REMOVE_IMAGE:  'WRITE/REMOVE_IMAGE',
+  RESET:         'WRITE/RESET',
+}
+
+export const MYPAGE = {
+  SET_TAB:  'MYPAGE/SET_TAB',
+  SET_PAGE: 'MYPAGE/SET_PAGE',
+
+  // API 연동
+  SET_DATA:    'MYPAGE/SET_DATA',
+  SET_ERROR:   'MYPAGE/SET_ERROR',
+}
+
+export const LOGIN = {
+  SET_FIELD: 'LOGIN/SET_FIELD',
+  SET_ERROR: 'LOGIN/SET_ERROR',
+}
+
+export const SIGNUP = {
+  SET_FIELD:    'SIGNUP/SET_FIELD',
+  SET_ERROR:    'SIGNUP/SET_ERROR',
+  SHOW_CODE:    'SIGNUP/SHOW_CODE',    // 이메일 인증 코드 입력 섹션 표시
+  SET_VERIFIED: 'SIGNUP/SET_VERIFIED', // 이메일 인증 완료 여부 세팅
+  SET_NICKNAME_CHECKED: 'SIGNUP/SET_NICKNAME_CHECKED',
+}
+
+export const CHANGE_PASS = {
+  SET_FIELD:    'CHANGE_PASS/SET_FIELD',
+  SET_ERROR:    'CHANGE_PASS/SET_ERROR',
+  SHOW_CODE:    'CHANGE_PASS/SHOW_CODE',    // 이메일 인증 코드 입력 섹션 표시
+  SET_VERIFIED: 'CHANGE_PASS/SET_VERIFIED', // 이메일 인증 완료 여부 세팅
+}
