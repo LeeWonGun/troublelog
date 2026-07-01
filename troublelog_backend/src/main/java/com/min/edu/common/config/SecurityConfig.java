@@ -74,6 +74,7 @@ public class SecurityConfig {
                         // 비회원도 조회 가능한 공개 API
                         .requestMatchers(HttpMethod.GET,
                                 "/api/questions/public",
+                                "/api/questions/popular",
                                 "/api/questions/search",
                                 "/api/questions/*",
                                 "/api/tech-stacks"
