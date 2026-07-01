@@ -1,9 +1,20 @@
 package com.min.edu.common.config;
 
+import com.min.edu.auth.security.GoogleOAuth2SuccessHandler;
+import com.min.edu.auth.security.JwtCookieAuthenticationFilter;
+import com.min.edu.auth.security.JsonAccessDeniedHandler;
+import com.min.edu.auth.security.JsonAuthenticationEntryPoint;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -13,48 +24,75 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    /*
-     * 초기 개발 단계에서는 JWT 인증 구조가 아직 구현되지 않았기 때문에
-     * 모든 요청을 임시로 허용한다.
-     *
-     * 프론트엔드는 Vite 개발 서버인 localhost:5173에서 실행되고,
-     * 백엔드는 localhost:8080에서 실행되므로 CORS 허용 설정이 필요하다.
-     */
+    private final JwtCookieAuthenticationFilter jwtCookieAuthenticationFilter;
+    private final JsonAuthenticationEntryPoint authenticationEntryPoint;
+    private final JsonAccessDeniedHandler accessDeniedHandler;
+    private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
+    private final ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider;
+
+    public SecurityConfig(
+            JwtCookieAuthenticationFilter jwtCookieAuthenticationFilter,
+            JsonAuthenticationEntryPoint authenticationEntryPoint,
+            JsonAccessDeniedHandler accessDeniedHandler,
+            GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler,
+            ObjectProvider<ClientRegistrationRepository> clientRegistrationRepositoryProvider
+    ) {
+        this.jwtCookieAuthenticationFilter = jwtCookieAuthenticationFilter;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
+        this.googleOAuth2SuccessHandler = googleOAuth2SuccessHandler;
+        this.clientRegistrationRepositoryProvider = clientRegistrationRepositoryProvider;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                /*
-                 * React에서 백엔드 API를 호출할 수 있도록 CORS 설정을 활성화한다.
-                 */
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                /*
-                 * REST API 서버에서는 JSON 요청을 주고받을 예정이므로
-                 * 초기 개발 단계에서는 CSRF를 비활성화한다.
-                 */
-                .csrf(csrf -> csrf.disable())
-
-                /*
-                 * TODO: JWT 인증 구현 후 회원가입, 로그인, 공개 질문 조회 API만 permitAll로 열어두고,
-                 * 나머지 API는 인증이 필요하도록 수정한다.
-                 */
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/health").permitAll()
-                        .anyRequest().permitAll()
-                );
+                        .requestMatchers(
+                                "/api/health",
+                                "/api/auth/signup",
+                                "/api/auth/signup/send-code",
+                                "/api/auth/signup/verify-code",
+                                "/api/auth/login",
+                                "/api/auth/check-email",
+                                "/api/auth/check-nickname",
+                                "/api/auth/password-reset/send-code",
+                                "/api/auth/password-reset/verify-code",
+                                "/api/auth/password-reset",
+                                "/oauth2/**",
+                                "/login/oauth2/**"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtCookieAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        if (clientRegistrationRepositoryProvider.getIfAvailable() != null) {
+            http.oauth2Login(oauth2 -> oauth2.successHandler(googleOAuth2SuccessHandler));
+        }
 
         return http.build();
     }
 
-    /*
-     * Vite React 개발 서버에서 Spring Boot API를 호출할 수 있도록 허용한다.
-     * 현재 프론트 개발 서버 주소는 http://localhost:5173 이다.
-     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
