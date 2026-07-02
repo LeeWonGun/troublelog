@@ -87,4 +87,39 @@ public class LikeService {
     }
 
     
+	// 질문 좋아요를 취소한다.
+    @Transactional
+    public LikeResponse unlikeQuestion(Long userId, Long questionId) {
+    	LikeEntity like = likeRepository
+    			.findByUserIdAndTargetIdAndTargetType(userId, questionId, LikeEntity.TargetType.QUE)
+    			.orElseThrow(() -> new BusinessException("좋아요를 누른 기록이 없습니다.", ErrorCode.LIKE_NOT_FOUND));
+    	
+    	likeRepository.delete(like);
+    	likeRepository.flush();   // ← 추가: JPA가 지금 즉시 DELETE를 DB로 내보내도록 강제
+    	likeMapper.updateQuestionCount(questionId);
+    	
+    	int likeCount = likeMapper.selectQuestionLikeCount(questionId);
+    	
+    	return new LikeResponse(false, likeCount);
+    	
+    }
+    
+    
+    // 답변 좋아요를 취소한다.
+    @Transactional
+    public LikeResponse unlikeAnswer(Long userId, Long answerId) {
+    	
+    	LikeEntity like = likeRepository
+    			.findByUserIdAndTargetIdAndTargetType(userId, answerId, LikeEntity.TargetType.ANS)
+    			.orElseThrow(() -> new BusinessException("좋아요를 누른 기록이 없습니다.", ErrorCode.LIKE_NOT_FOUND));
+    	
+    	likeRepository.delete(like);
+    	likeRepository.flush();   // ← 추가: JPA가 지금 즉시 DELETE를 DB로 내보내도록 강제
+    	likeMapper.updateAnswerCount(answerId);
+    	
+    	int likeCount = likeMapper.selectAnswerLikeCount(answerId);
+    	
+    	return new LikeResponse(false, likeCount);
+    }
+    
 }

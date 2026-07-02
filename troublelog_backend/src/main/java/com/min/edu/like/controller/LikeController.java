@@ -46,5 +46,35 @@ public class LikeController {
 		
 		return ApiResponse.success("좋아요가 등록되었습니다.", response);
 	}
+	
+	
+	// 질문 좋아요 취소
+	@DeleteMapping("/api/questions/{questionId}/likes")
+	public ApiResponse<LikeResponse> unlikeQuestion(
+			@PathVariable Long questionId,
+			Authentication authentication
+			) {
+		
+		Long userId = CurrentUser.id(authentication);
+		
+		LikeResponse response = likeService.unlikeQuestion(userId, questionId);
+		
+		return ApiResponse.success("좋아요가 취소되었습니다.", response);
+	}
+	
+	
+	// 답변 좋아요 취소
+	@DeleteMapping("/api/answers/{answerId}/likes")
+	public ApiResponse<LikeResponse> unlikeAnswer(
+			@PathVariable Long answerId,
+			Authentication authentication
+	) {
+		
+		Long userId = CurrentUser.id(authentication);
+		
+		LikeResponse response = likeService.unlikeAnswer(userId, answerId);
+		
+		return ApiResponse.success("좋아요가 취소되었습니다.", response);
+	}
 
 }
