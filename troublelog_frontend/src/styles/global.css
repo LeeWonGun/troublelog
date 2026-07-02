@@ -432,6 +432,8 @@ input, textarea, select { font-family: inherit; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .mini-list { display: flex; flex-direction: column; }
 .mini-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 2px; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+.mini-row--link { cursor: pointer; }
+.mini-row--link:hover .t { color: var(--blue-bright); }
 .mini-row:last-child { border-bottom: none; }
 .mini-row .t { flex: 1; padding-right: 10px; }
 .mini-row .badge-mini { font-family: var(--font-mono); font-size: 10.5px; color: var(--blue-bright); background: var(--blue-soft-bg); padding: 2px 6px; border-radius: 4px; margin-right: 8px; }
