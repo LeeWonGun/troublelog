@@ -83,5 +83,16 @@
 	    WHERE id = #{id}
 	</update>
 	
+	
+	<!-- 교체 시 기존 활성 파일 소프트 삭제 -->
+	<update id="softDeleteActiveFile">
+	    UPDATE question_files
+	    SET delflag = 'Y',
+	        deleted_at = NOW(),
+	        purge_due_at = DATE_ADD(NOW(), INTERVAL 7 DAY)
+	    WHERE question_id = #{questionId}
+	      AND delflag = 'N'
+	</update>
+	
 </mapper>   
  

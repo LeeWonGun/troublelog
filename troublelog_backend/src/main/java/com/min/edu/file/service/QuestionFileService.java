@@ -179,5 +179,39 @@ public class QuestionFileService {
 
     	return new FileResourceResponse(resource, file.getContentType());
     }
+    
+    
+    // 질문 첨부 파일을 교체한다. 기존 활성 파일을 소프트 삭제하고 새 파일을 등록한다. (한 트랜잭션으로 원자적 처리)
+    @Transactional
+    public FileResponse replaceFile(Long userId, Long questionId, MultipartFile file) {
+    	
+    	validateWriter(questionId, userId);
+    	validateFile(file);
+    	
+    	// 기존 활성 파일 소프트 삭제 (없어도 에러 아님 - 그냥 새 업로드처럼 동작)
+    	questionFileMapper.softDeleteActiveFile(questionId);
+    	
+    	// 새 파일 저장 + INSERT (업로드와 동일한 흐름)
+    	String extension = extractExtension(file.getOriginalFilename());
+    	String uploadFilename = UUID.randomUUID() + "." + extension;
+    	
+    	String filePath = fileStorage.store(file, uploadFilename);
+    	String fileUrl = fileStorage.resolveUrl(uploadFilename);
+    	
+    	QuestionFileEntity entity = new QuestionFileEntity(
+    			questionId,
+    			file.getOriginalFilename(),
+    			uploadFilename,
+    			filePath,
+    			fileUrl,
+    			file.getContentType(),
+    			file.getSize()
+    	);
+    	
+    	questionFileMapper.insertFile(entity);
+    	
+    	return toResponse(entity);
+    			
+    }
 
 }

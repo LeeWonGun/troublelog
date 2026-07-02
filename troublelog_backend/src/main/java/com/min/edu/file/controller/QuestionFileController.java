@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -100,6 +101,22 @@ public class QuestionFileController {
  			}
  			return null;
  		}
+ 	}
+ 	
+ 	
+ 	// 질문 첨부 파일 교체 (작성자만 가능, 기존 파일은 소프트 삭제 후 새 파일 등록)
+ 	@PutMapping("/api/questions/{questionId}/files")
+ 	public ApiResponse<FileResponse> replaceFile(
+ 			@PathVariable Long questionId,
+ 			@RequestParam("file") MultipartFile file,
+ 			Authentication authentication
+ 	) {
+ 		
+ 		Long userId = CurrentUser.id(authentication);
+ 		
+ 		FileResponse response = questionFileService.replaceFile(userId, questionId, file);
+ 		
+ 		return ApiResponse.success("파일이 교체되었습니다.", response);
  	}
  	
 	

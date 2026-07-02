@@ -33,4 +33,8 @@ public interface QuestionFileMapper {
 	// 물리 삭제 완료 시각(purged_at)을 기록한다.
 	void updatePurgedAt(@Param("id") Long id);
 	
+	
+	// 기존 활성 파일을 소프트 삭제 처리한다. (교체 시 사용)
+	void softDeleteActiveFile(@Param("questionId") Long questionId);
+	
 }
