@@ -21,7 +21,6 @@ const myPageReducer = (state, action) => {
     case MYPAGE.SET_PAGE:
       return { ...state, pages: { ...state.pages, [state.activeTab]: action.payload } }
 
-    // API 연동 - 내 질문 목록
     case MYPAGE.SET_LOADING:
       return { ...state, myQuestions: { ...state.myQuestions, loading: true, error: null } }
     case MYPAGE.SET_DATA:

@@ -7,6 +7,7 @@ import myPageReducer, { initialState } from '../reducers/myPageReducer.js'
 import { MOCK_MY_QUESTIONS, MOCK_MY_ANSWERS, MOCK_MY_COMMENTS } from '../constants/mockData.js'
 import { getMyQuestions } from '../api/questionApi.js'
 import { requestHandler } from '../util/requestHandler.js'
+import { mapQuestionListItem } from '../util/questionMapper.js'
 
 const PAGE_SIZE = 5
 
