@@ -1,9 +1,14 @@
 package com.min.edu.question.repository;
 
 import com.min.edu.question.entity.Question;
+import com.min.edu.question.entity.QuestionStatus;
+import com.min.edu.question.entity.QuestionVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -13,18 +18,21 @@ import java.util.Optional;
  * 단순 조회, 상세 조회, 저장/수정/삭제처럼 Entity 상태 변경이 필요한 작업은 JPA로 처리한다.
  * 조건이 많은 검색 쿼리는 MyBatis Mapper에서 처리한다.
  */
+/**
+ * 질문 Entity의 기본 조회, 목록 조회, 상태 변경 쿼리를 담당하는 JPA Repository입니다.
+ */
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     Page<Question> findByVisibilityAndDelflag(
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
             Pageable pageable
     );
 
     Page<Question> findByVisibilityAndDelflagAndStatus(
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
-            String status,
+            QuestionStatus status,
             Pageable pageable
     );
 
@@ -37,24 +45,28 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Page<Question> findByWriterIdAndDelflagAndStatus(
             Long writerId,
             String delflag,
-            String status,
+            QuestionStatus status,
             Pageable pageable
     );
 
     Page<Question> findByTeamIdAndVisibilityAndDelflag(
             Long teamId,
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
             Pageable pageable
     );
 
     Page<Question> findByTeamIdAndVisibilityAndDelflagAndStatus(
             Long teamId,
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
-            String status,
+            QuestionStatus status,
             Pageable pageable
     );
 
     Optional<Question> findByIdAndDelflag(Long id, String delflag);
+
+    @Modifying
+    @Query("update Question q set q.viewCount = q.viewCount + 1 where q.id = :questionId and q.delflag = 'N'")
+    int increaseViewCount(@Param("questionId") Long questionId);
 }

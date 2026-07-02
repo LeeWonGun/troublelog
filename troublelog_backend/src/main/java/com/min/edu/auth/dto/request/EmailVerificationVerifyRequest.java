@@ -1,4 +1,4 @@
-package com.min.edu.auth.dto;
+package com.min.edu.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -3,6 +3,9 @@ package com.min.edu.question.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * 질문 본문과 코드 입력값을 Markdown 문자열로 합치고 다시 분리하는 유틸리티입니다.
+ */
 public final class QuestionContentFormatter {
 
     private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile(

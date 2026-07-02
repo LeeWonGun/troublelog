@@ -9,6 +9,9 @@ import java.util.List;
 /**
  * 질문 목록 화면에서 질문 카드 하나를 표현하는 응답 DTO이다.
  */
+/**
+ * 질문 목록 화면의 질문 카드 한 건을 표현하는 응답 DTO입니다.
+ */
 public record QuestionListResponse(
         Long questionId,
         String title,
@@ -44,8 +47,28 @@ public record QuestionListResponse(
                 question.getTitle(),
                 question.getWriterId(),
                 null,
-                question.getStatus(),
-                question.getVisibility(),
+                question.getStatus().name(),
+                question.getVisibility().name(),
+                question.getAnswerCount(),
+                question.getLikeCount(),
+                question.getViewCount(),
+                techStacks,
+                question.getCreatedAt()
+        );
+    }
+
+    public static QuestionListResponse from(
+            Question question,
+            String writerNickname,
+            List<TechStackResponse> techStacks
+    ) {
+        return new QuestionListResponse(
+                question.getId(),
+                question.getTitle(),
+                question.getWriterId(),
+                writerNickname,
+                question.getStatus().name(),
+                question.getVisibility().name(),
                 question.getAnswerCount(),
                 question.getLikeCount(),
                 question.getViewCount(),

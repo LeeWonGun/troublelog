@@ -3,10 +3,7 @@ package com.min.edu.question.dto.request;
 import java.util.List;
 
 /**
- * 질문 검색 조건을 Service로 전달하기 위한 DTO이다.
- *
- * Controller에서 받은 query parameter를 하나의 객체로 묶어서
- * Service에 전달한다.
+ * 질문 검색 API의 query parameter를 하나로 묶어 전달하는 요청 DTO입니다.
  */
 public record QuestionSearchCondition(
         String keyword,
