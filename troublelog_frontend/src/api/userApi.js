@@ -9,8 +9,8 @@ export const updateNickname = (nickname) =>
   axiosInstance.patch('/api/users/me/nickname', { nickname })
 
 // PATCH /api/users/me/password - 비밀번호 변경 (LOCAL 사용자만)
-export const updatePassword = ({ newPassword }) =>
-  axiosInstance.patch('/api/users/me/password', { newPassword })
+export const updatePassword = (data) =>
+  axiosInstance.patch('/api/users/me/password', data)
 
 // DELETE /api/users/me - 회원 탈퇴 (soft delete)
 export const deleteAccount = () =>

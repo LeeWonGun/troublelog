@@ -35,9 +35,7 @@ public class JwtCookieAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            getAccessToken(request).ifPresent(this::authenticate);
-        }
+        getAccessToken(request).ifPresent(this::authenticate);
 
         filterChain.doFilter(request, response);
     }
