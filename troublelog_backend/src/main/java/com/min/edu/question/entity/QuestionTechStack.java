@@ -14,10 +14,13 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "question_tech_stacks")
-@IdClass(QuestionTechStackId.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class QuestionTechStack {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     /**
      * 질문 ID이다.
@@ -25,7 +28,6 @@ public class QuestionTechStack {
      * 복합키에 포함된다.
      * Question Entity와의 직접 연관관계는 인증/질문 작성 구조가 더 확정된 뒤 검토한다.
      */
-    @Id
     @Column(name = "question_id", nullable = false)
     private Long questionId;
 
@@ -34,7 +36,6 @@ public class QuestionTechStack {
      *
      * 복합키에 포함된다.
      */
-    @Id
     @Column(name = "tech_stack_id", nullable = false)
     private Long techStackId;
 
