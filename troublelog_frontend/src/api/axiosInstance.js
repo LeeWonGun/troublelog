@@ -10,6 +10,10 @@ const axiosInstance = axios.create({
   withCredentials: true,
 })
 
+const SAFE_METHODS = new Set(['get', 'head', 'options'])
+let csrfToken = null
+let csrfTokenPromise = null
+
 let _onLoadingChange = null
 let _activeRequests = 0
 
@@ -27,9 +31,31 @@ const decrementLoading = () => {
   if (_activeRequests === 0) _onLoadingChange?.(false)
 }
 
+const getCsrfToken = async () => {
+  if (csrfToken) return csrfToken
+  if (!csrfTokenPromise) {
+    csrfTokenPromise = axios
+      .get('/api/auth/csrf', {
+        baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+        withCredentials: true,
+      })
+      .then(response => response.data?.data?.token)
+      .finally(() => { csrfTokenPromise = null })
+  }
+  csrfToken = await csrfTokenPromise
+  return csrfToken
+}
+
 axiosInstance.interceptors.request.use(
-  (config) => {
+  async (config) => {
     incrementLoading()
+
+    if (!SAFE_METHODS.has((config.method ?? 'get').toLowerCase())) {
+      const token = await getCsrfToken()
+      if (token) {
+        config.headers['X-XSRF-TOKEN'] = token
+      }
+    }
 
     const fullUrl = typeof window !== "undefined"
       ? new URL(axios.getUri(config), window.location.origin).toString()

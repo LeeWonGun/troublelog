@@ -1,10 +1,14 @@
-import { useReducer } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useReducer } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { LOGIN } from '../constants/actionTypes.js'
 import { login } from '../api/authApi.js'
 import { requestHandler } from '../util/requestHandler.js'
 
 const initialState = { id: '', password: '', error: '' }
+
+const OAUTH_ERROR_MESSAGES = {
+  INVALID_AUTH_PROVIDER: '이미 이메일 회원가입된 계정입니다. 이메일/비밀번호로 로그인해 주세요.',
+}
 
 function reducer(state, action) {
   switch (action.type) {
@@ -16,7 +20,18 @@ function reducer(state, action) {
 
 function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [state, dispatch] = useReducer(reducer, initialState)
+
+  useEffect(() => {
+    const oauthError = new URLSearchParams(location.search).get('oauthError')
+    if (oauthError) {
+      dispatch({
+        type: LOGIN.SET_ERROR,
+        payload: OAUTH_ERROR_MESSAGES[oauthError] ?? '소셜 로그인 처리 중 오류가 발생했습니다.',
+      })
+    }
+  }, [location.search])
 
   const set = (field) => (e) =>
     dispatch({ type: LOGIN.SET_FIELD, field, value: e.target.value })

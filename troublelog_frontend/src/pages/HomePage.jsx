@@ -31,7 +31,7 @@ function HomePage() {
     // 인기 게시글 조회
     requestHandler(() => getPopularQuestions({ page: 0, size: 5 }), {
       isCancelled: () => ignore,
-      onSuccess: (data) => setPopularPosts(data.content ?? []),
+      onSuccess: (data) => setPopularPosts((data.content ?? []).map(mapQuestionListItem)),
       onFail: (message) => console.error('인기 게시글 로드 실패:', message),
     })
 
@@ -60,10 +60,10 @@ function HomePage() {
           ) : (
             popularPosts.map((p, i) => (
               <RankItem
-                key={p.questionId}
+                key={p.id}
                 post={p}
                 rank={i + 1}
-                onClick={() => navigate(`/questions/${p.questionId}`)}
+                onClick={() => navigate(`/questions/${p.id}`)}
               />
             ))
           )}
