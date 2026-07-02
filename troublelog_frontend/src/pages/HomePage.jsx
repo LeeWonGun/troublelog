@@ -31,7 +31,7 @@ function HomePage() {
     //TODO: 인기 게시글 조회 (BE 미구현 API - 추후 확인)
     requestHandler(() => getPopularQuestions(), {
       isCancelled: () => ignore,
-      onSuccess: (data) => setPopularPosts(data ?? []),
+      onSuccess: (data) => setPopularPosts((data.content ?? []).map(mapQuestionListItem)),
       onFail: (message) => console.error('인기 게시글 로드 실패:', message),
     })
 
@@ -60,10 +60,10 @@ function HomePage() {
           ) : (
             popularPosts.map((p, i) => (
               <RankItem
-                key={p.questionId}
+                key={p.id}
                 post={p}
                 rank={i + 1}
-                onClick={() => navigate(`/questions/${p.questionId}`)}
+                onClick={() => navigate(`/questions/${p.id}`)}
               />
             ))
           )}
