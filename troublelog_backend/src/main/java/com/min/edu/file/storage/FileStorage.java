@@ -16,7 +16,10 @@ public interface FileStorage {
 	// 저장된 파일명을 바탕으로 외부에서 접근 가능한 URL(file_url)을 생성한다.
 	String resolveUrl(String uploadFilename);
 	
-	// 실제 저장된 파일을 디스크에서 읽어와, 브라우저에 바이너리로 전송할 수 있는 형태(Resource)로 반환한다.
+	// 실제 저장된 파일을 디스크에서 읽어와, 브라우저에 바이너리로 전송할 수 있는 형태(Resource)로 반환한다.(이미지 서빙용)
 	Resource loadAsResource(String filePath);
+	
+	// 저장된 파일을 디스크에서 실제로 삭제한다. (스케줄러의 물리 삭제용)
+	void delete(String filePath);
 
 }

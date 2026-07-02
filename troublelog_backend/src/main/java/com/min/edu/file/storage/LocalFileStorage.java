@@ -77,5 +77,15 @@ public class LocalFileStorage implements FileStorage {
             throw new BusinessException("파일 경로가 올바르지 않습니다.", ErrorCode.FILE_NOT_FOUND);
         }
     }
+	
+	// 파일이 이미 없어도 에러 없이 넘어간다. (스케줄러가 파일 하나 때문에 멈추지 않도록)
+	@Override
+	public void delete(String filePath) {
+	    try {
+	        Files.deleteIfExists(Paths.get(filePath));
+	    } catch (IOException e) {
+	        throw new BusinessException("파일 삭제에 실패했습니다.", ErrorCode.INTERNAL_SERVER_ERROR);
+	    }
+	}
 
 }

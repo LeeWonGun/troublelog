@@ -65,5 +65,23 @@
 	      )
 	</select>
 	
+	
+	<!-- 물리 삭제 대상 조회: 소프트 삭제됐고, 삭제 예정일(purge_due_at)이 지났고, 아직 물리 삭제 안 된 파일 -->
+	<select id="selectPurgeTargets" resultType="com.min.edu.file.entity.QuestionFileEntity">
+	    SELECT id, file_path
+	    FROM question_files
+	    WHERE delflag = 'Y'
+	      AND purge_due_at &lt;= NOW()
+	      AND purged_at IS NULL
+	</select>
+	
+	
+	<!-- 물리 삭제 완료 시각 기록 -->
+	<update id="updatePurgedAt">
+	    UPDATE question_files
+	    SET purged_at = NOW()
+	    WHERE id = #{id}
+	</update>
+	
 </mapper>   
  
