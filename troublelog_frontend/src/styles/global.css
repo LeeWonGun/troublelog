@@ -392,6 +392,8 @@ input, textarea, select { font-family: inherit; }
 .radio-row { display: flex; gap: 20px; align-items: center; }
 .radio-opt { display: flex; align-items: center; gap: 7px; font-size: 13.5px; color: var(--text-secondary); cursor: pointer; }
 .radio-opt input { accent-color: var(--blue); }
+.radio-opt--disabled { color: var(--text-muted); cursor: not-allowed; }
+.radio-opt--disabled input { cursor: not-allowed; }
 .stack-grid { display: flex; flex-direction: column; gap: 10px; }
 .stack-row { display: flex; align-items: baseline; gap: 14px; }
 .stack-row .cat { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); width: 78px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.03em; }

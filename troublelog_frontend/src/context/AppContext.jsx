@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 import appReducer, { initialState } from '../reducers/appReducer.js'
 import { APP } from '../constants/actionTypes.js'
 import { AUTH_PAGE_PATHS } from '../constants/routePaths.js'
@@ -7,11 +7,12 @@ import { getMyTeams } from '../api/teamApi.js'
 import { registerLoadingCallback } from '../api/axiosInstance.js'
 import { requestHandler, registerGlobalErrorHandler } from '../util/requestHandler.js'
 import { useLocation } from 'react-router-dom'
-
+import { getTechStacks } from '../api/techStackApi.js'
+import { AppContext } from './appContextCore.js'
 
 // 전역 상태 (인증, 팀, 모달, 검색필터)
-
-const AppContext = createContext(null)
+// Context 객체/훅은 HMR 안정성을 위해 appContextCore.js로 분리 (아래 re-export는 기존 import 경로 호환용)
+export { useAppContext } from './appContextCore.js'
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
@@ -49,16 +50,17 @@ export function AppProvider({ children }) {
     })
   }, [isOnAuthPage])
 
+  // 기술 스택 목록은 공개 API이고 화면 여러 곳(작성/검색)에서 쓰므로 앱 마운트 시 1회만 조회
+  useEffect(() => {
+    requestHandler(getTechStacks, {
+      onSuccess: (data) => dispatch({ type: APP.SET_TECH_STACKS, payload: data }),
+      onFail: (message) => console.warn('[AppContext] 기술 스택 조회 실패:', message),
+    })
+  }, [])
+
   return (
     <AppContext.Provider value={{ state, dispatch }}>
       {children}
     </AppContext.Provider>
   )
-}
-
-// 커스텀 훅 - AppProvider 외부 사용 시 오류 발생
-export function useAppContext() {
-  const ctx = useContext(AppContext)
-  if (!ctx) throw new Error('useAppContext must be used within AppProvider')
-  return ctx
 }
