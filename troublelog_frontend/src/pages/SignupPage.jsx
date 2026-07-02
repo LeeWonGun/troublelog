@@ -76,7 +76,7 @@ function SignupPage() {
     })
   }
 
-  async function handleAuthCode() {
+  async function handleVerifyCode() {
     if (!state.emailCode) {
       dispatch({ type: SIGNUP.SET_FIELD, field: 'emailCodeError', value: '인증 코드를 입력하세요.' })
       return
@@ -176,7 +176,7 @@ function SignupPage() {
               />
               <button
                 className="btn btn-ghost btn-sm"
-                onClick={handleAuthCode}
+                onClick={handleVerifyCode}
                 disabled={state.emailVerified}
               >
                 {state.emailVerified ? '인증 완료' : '인증 확인'}

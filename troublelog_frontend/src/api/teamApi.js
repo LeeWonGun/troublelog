@@ -5,6 +5,10 @@ import axiosInstance from './axiosInstance.js'
 export const createTeam = (data) =>
   axiosInstance.post('/api/teams', data)
 
+// GET /api/teams/code/{teamCode} - 팀 참여 전 팀 코드 유효성 확인
+export const getTeamByCode = (teamCode) =>
+  axiosInstance.get(`/api/teams/code/${encodeURIComponent(teamCode)}`)
+
 // POST /api/teams/join - 팀 코드로 팀 참여
 export const joinTeam = (teamCode) =>
   axiosInstance.post('/api/teams/join', { teamCode })

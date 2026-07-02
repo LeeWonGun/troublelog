@@ -10,14 +10,14 @@ const PAGE_SIZE = 5
 
 function getRows(tab) {
   if (tab === 'questions') return MOCK_MY_QUESTIONS
-  if (tab === 'answers')   return MOCK_MY_ANSWERS
+  if (tab === 'answers') return MOCK_MY_ANSWERS
   return MOCK_MY_COMMENTS
 }
 
 const EMPTY_MSG = {
   questions: '작성한 게시글이 없습니다.',
-  answers:   '작성한 답변이 없습니다.',
-  comments:  '작성한 댓글이 없습니다.',
+  answers: '작성한 답변이 없습니다.',
+  comments: '작성한 댓글이 없습니다.',
 }
 
 function MyPage() {
@@ -26,7 +26,7 @@ function MyPage() {
 
   const { activeTab, pages } = state
   const all = getRows(activeTab)
-  const totalPages  = Math.max(1, Math.ceil(all.length / PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE))
   const currentPage = Math.min(pages[activeTab], totalPages)
   const shown = all.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
@@ -35,7 +35,6 @@ function MyPage() {
       <div className="mypage-head">
         <div>
           <h1>마이페이지</h1>
-          <span className="since">가입일: {appState.userSince}</span>
         </div>
         <button
           className="btn btn-ghost btn-sm"
@@ -52,9 +51,9 @@ function MyPage() {
       <div className="panel">
         <div className="auth-tabs auth-tabs--mb">
           {[
-            ['questions', '내 질문',  MOCK_MY_QUESTIONS.length],
-            ['answers',   '내 답변',  MOCK_MY_ANSWERS.length],
-            ['comments',  '내 댓글',  MOCK_MY_COMMENTS.length],
+            ['questions', '내 질문', MOCK_MY_QUESTIONS.length],
+            ['answers', '내 답변', MOCK_MY_ANSWERS.length],
+            ['comments', '내 댓글', MOCK_MY_COMMENTS.length],
           ].map(([tab, label, count]) => (
             <button
               key={tab}
@@ -111,32 +110,34 @@ function MyPage() {
         <h1>내 팀 관리</h1>
       </div>
       <div className="panel">
-        {appState.teams.map(t => (
-          <div key={t.id} className="team-manage-row">
-            <div>
-              {t.name}
-              <span className={`role-tag ${t.role === 'leader' ? 'leader' : 'member'}`}>
-                {t.role === 'leader' ? '팀장' : '팀원'}
-              </span>
+        {appState.teams.length > 0 ?
+          appState.teams.map(t => (
+            <div key={t.teamId} className="team-manage-row">
+              <div>
+                {t.name}
+                <span className={`role-tag ${t.role === 'LEADER' ? 'LEADER' : 'MEMBER'}`}>
+                  {t.role === 'LEADER' ? '팀장' : '팀원'}
+                </span>
+              </div>
+              {t.role === 'LEADER' ? (
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.TEAM_MANAGE, teamId: t.teamId } })}
+                >
+                  관리
+                </button>
+              ) : (
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.LEAVE_CONFIRM, teamId: t.teamId } })}
+                >
+                  탈퇴
+                </button>
+              )}
             </div>
-            {t.role === 'leader' ? (
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.TEAM_MANAGE, teamId: t.id } })}
-              >
-                관리
-              </button>
-            ) : (
-              /* 탈퇴 버튼: 목업 기준 btn-danger (빨간 테두리) */
-              <button
-                className="btn btn-danger btn-sm"
-                onClick={() => appDispatch({ type: APP.OPEN_MODAL, payload: { modal: MODAL.LEAVE_CONFIRM, teamId: t.id } })}
-              >
-                탈퇴
-              </button>
-            )}
-          </div>
-        ))}
+          ))
+          : <p className="empty-message">소속된 팀이 없습니다.</p>}
+
       </div>
     </div>
   )

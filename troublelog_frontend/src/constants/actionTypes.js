@@ -6,6 +6,7 @@ export const APP = {
   OPEN_MODAL:              'APP/OPEN_MODAL',
   CLOSE_MODAL:             'APP/CLOSE_MODAL',
   ADD_TEAM:                'APP/ADD_TEAM',
+  JOIN_TEAM:               'APP/JOIN_TEAM',
   REMOVE_TEAM:             'APP/REMOVE_TEAM',
   LEAVE_TEAM:              'APP/LEAVE_TEAM',
   SET_SEARCH_KEYWORD:      'APP/SET_SEARCH_KEYWORD',
@@ -18,6 +19,10 @@ export const APP = {
   SET_USER:                'APP/SET_USER',    // 로그인 사용자 정보 세팅
   SET_TEAMS:               'APP/SET_TEAMS',   // 팀 목록 세팅
   SET_GLOBAL_LOADING:      'APP/SET_GLOBAL_LOADING', // axios 요청 진행 중 전역 로딩 오버레이
+
+  // 전역 에러 모달
+  SHOW_ERROR:              'APP/SHOW_ERROR', // 전역 에러 모달 표시
+  HIDE_ERROR:              'APP/HIDE_ERROR', // 전역 에러 모달 닫기
 }
 
 export const QLIST = {
