@@ -85,7 +85,7 @@ public class QuestionService {
         entityManager.refresh(question);
 
         QuestionContentParts contentParts = QuestionContentFormatter.parse(question.getContent());
-        return questionResponseAssembler.toDetailResponse(question, contentParts);
+        return questionResponseAssembler.toDetailResponse(question, contentParts, currentUserId);
     }
 
     @Transactional(readOnly = true)

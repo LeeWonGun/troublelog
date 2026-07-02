@@ -1,6 +1,8 @@
 package com.min.edu.question.service;
 
 import com.min.edu.common.response.PageResponse;
+import com.min.edu.like.entity.LikeEntity;
+import com.min.edu.like.repository.LikeRepository;
 import com.min.edu.question.dto.response.QuestionDetailResponse;
 import com.min.edu.question.dto.response.QuestionListResponse;
 import com.min.edu.question.dto.response.QuestionSearchRow;
@@ -28,26 +30,38 @@ public class QuestionResponseAssembler {
     private final QuestionTechStackService questionTechStackService;
     private final UserRepository userRepository;
     private final TeamRepository teamRepository;
+    private final LikeRepository likeRepository;
 
     public QuestionResponseAssembler(
             QuestionTechStackService questionTechStackService,
             UserRepository userRepository,
-            TeamRepository teamRepository
+            TeamRepository teamRepository,
+            LikeRepository likeRepository
     ) {
         this.questionTechStackService = questionTechStackService;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
+        this.likeRepository = likeRepository;
     }
 
     public QuestionDetailResponse toDetailResponse(
             Question question,
-            QuestionContentParts contentParts
+            QuestionContentParts contentParts,
+            Long currentUserId
     ) {
         List<TechStackResponse> techStacks = questionTechStackService.getTechStacks(question.getId());
         String writerNickname = getWriterNickname(question.getWriterId());
         String teamName = getTeamName(question.getTeamId());
+        boolean likedByMe = isLikedByMe(question.getId(), currentUserId);
 
-        return QuestionDetailResponse.from(question, contentParts, techStacks, writerNickname, teamName);
+        return QuestionDetailResponse.from(
+                question,
+                contentParts,
+                techStacks,
+                writerNickname,
+                teamName,
+                likedByMe
+        );
     }
 
     public PageResponse<QuestionListResponse> toPageResponse(
@@ -141,5 +155,17 @@ public class QuestionResponseAssembler {
                 .filter(team -> !team.isDeleted())
                 .map(Team::getName)
                 .orElse(null);
+    }
+
+    private boolean isLikedByMe(Long questionId, Long currentUserId) {
+        if (currentUserId == null) {
+            return false;
+        }
+
+        return likeRepository.existsByUserIdAndTargetIdAndTargetType(
+                currentUserId,
+                questionId,
+                LikeEntity.TargetType.QUE
+        );
     }
 }
