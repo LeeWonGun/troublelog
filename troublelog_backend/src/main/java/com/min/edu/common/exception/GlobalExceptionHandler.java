@@ -6,6 +6,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,5 +66,15 @@ public class GlobalExceptionHandler {
                 "서버 내부 오류가 발생했습니다.",
                 ErrorCode.INTERNAL_SERVER_ERROR.name()
         );
+    }
+    
+    /*
+     * 업로드 파일이 서버 최대 용량(5MB)을 초과할 때 발생하는 예외를 처리한다.
+     * Controller에 도달하기 전 서블릿 단계에서 던져지므로 별도로 잡아 FILE_SIZE_EXCEEDED로 통일한다.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<Void> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
+        return ApiResponse.fail("파일 크기는 5MB를 초과할 수 없습니다.", ErrorCode.FILE_SIZE_EXCEEDED.name());
     }
 }

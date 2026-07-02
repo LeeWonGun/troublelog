@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="com.min.edu.file.repository.QuestionFileMapper">
+	
+	<!-- 질문당 활성 파일 1개 제한 확인 -->
+	<select id="existsActiveFile" resultType="int">
+		SELECT COUNT(*)
+        FROM question_files
+        WHERE question_id = #{questionId}
+          AND delflag = 'N'
+	</select>
+	
+	
+	<!-- 파일 업로드 INSERT -->
+	<insert id="insertFile" parameterType="com.min.edu.file.entity.QuestionFileEntity"
+	        useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO question_files
+            (question_id, original_filename, upload_filename, file_path,
+             file_url, content_type, file_size, delflag, created_at)
+        VALUES
+            (#{questionId}, #{originalFilename}, #{uploadFilename}, #{filePath},
+             #{fileUrl}, #{contentType}, #{fileSize}, #{delflag}, #{createdAt})
+    </insert>
+    
+    
+    <!-- 
+	  질문 작성자 여부 확인.
+	  TEAM 질문인 경우, 작성자 본인이어도 현재 팀에서 탈퇴(team_members.delflag='Y')했다면 
+	  권한을 잃는다. PUBLIC 질문은 팀 개념이 없으므로 작성자 여부만 확인한다.
+	-->
+	<select id="existsQuestionWriter" resultType="int">
+	    SELECT COUNT(*)
+	    FROM questions q
+	    WHERE q.id = #{questionId}
+	      AND q.writer_id = #{userId}
+	      AND q.delflag = 'N'
+	      AND (
+	          q.visibility = 'PUBLIC'
+	          OR EXISTS (
+	              SELECT 1 FROM team_members tm
+	              WHERE tm.team_id = q.team_id
+	                AND tm.user_id = #{userId}
+	                AND tm.delflag = 'N'
+	          )
+	      )
+	</select>
+	
+	
+	<!-- 질문 접근 권한 확인: PUBLIC이면 통과, TEAM이면 활성 팀원인지 확인 -->
+	<select id="existsAccessibleQuestion" resultType="int">
+	    SELECT COUNT(*)
+	    FROM questions q
+	    WHERE q.id = #{questionId}
+	      AND q.delflag = 'N'
+	      AND (
+	          q.visibility = 'PUBLIC'
+	          OR EXISTS (
+	              SELECT 1 FROM team_members tm
+	              WHERE tm.team_id = q.team_id
+	                AND tm.user_id = #{userId}
+	                AND tm.delflag = 'N'
+	          )
+	      )
+	</select>
+	
+	
+	<!-- 물리 삭제 대상 조회: 소프트 삭제됐고, 삭제 예정일(purge_due_at)이 지났고, 아직 물리 삭제 안 된 파일 -->
+	<select id="selectPurgeTargets" resultType="com.min.edu.file.entity.QuestionFileEntity">
+	    SELECT id, file_path
+	    FROM question_files
+	    WHERE delflag = 'Y'
+	      AND purge_due_at &lt;= NOW()
+	      AND purged_at IS NULL
+	</select>
+	
+	
+	<!-- 물리 삭제 완료 시각 기록 -->
+	<update id="updatePurgedAt">
+	    UPDATE question_files
+	    SET purged_at = NOW()
+	    WHERE id = #{id}
+	</update>
+	
+	
+	<!-- 교체 시 기존 활성 파일 소프트 삭제 -->
+	<update id="softDeleteActiveFile">
+	    UPDATE question_files
+	    SET delflag = 'Y',
+	        deleted_at = NOW(),
+	        purge_due_at = DATE_ADD(NOW(), INTERVAL 7 DAY)
+	    WHERE question_id = #{questionId}
+	      AND delflag = 'N'
+	</update>
+	
+</mapper>   
+ 
