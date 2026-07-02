@@ -4,12 +4,14 @@ import { MODAL } from '../constants/modalTypes.js'
 // 전역 앱 상태: 인증 정보, 팀 목록, 모달, 상세 검색 필터 관리
 export const initialState = {
   isLoggedIn: false,   // 로그인 여부 (사이드바 비회원/회원 분기에 사용)
+  userId: null,        // 로그인 사용자 PK - 게시글/답변 작성자 본인 여부 비교에 사용
   nickname: null,
   email: null,
   authProvider: null,  // 'LOCAL' | 'GOOGLE'
   globalLoading: false, // axios 요청 진행 중 오버레이 표시 여부
 
   teams: [],
+  techStacks: [],
   teamListOpen: true,
   activeTeam: null,          // null: 전체 게시판
 
@@ -34,6 +36,16 @@ const appReducer = (state, action) => {
       return {
         ...state,
         isLoggedIn: true,
+        userId: action.payload.userId,
+        nickname: action.payload.nickname,
+        email: action.payload.email,
+        authProvider: action.payload.authProvider,
+      }
+
+    case APP.SET_USER:
+      return {
+        ...state,
+        isLoggedIn: true,
         nickname: action.payload.nickname,
         email: action.payload.email,
         authProvider: action.payload.authProvider,
@@ -43,10 +55,14 @@ const appReducer = (state, action) => {
     case APP.CLEAR_USER:
       return {
         ...initialState,
+        techStacks: state.techStacks,
       }
 
     case APP.SET_TEAMS:
       return { ...state, teams: action.payload }
+
+    case APP.SET_TECH_STACKS:
+      return { ...state, techStacks: action.payload }
 
     case APP.SET_NICKNAME:
       return { ...state, nickname: action.payload }

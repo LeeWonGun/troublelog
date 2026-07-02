@@ -1,21 +1,17 @@
 import { useEffect, useReducer } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext.jsx'
 import { APP, MYPAGE } from '../constants/actionTypes.js'
 import { MODAL } from '../constants/modalTypes.js'
 import Pagination from '../components/common/Pagination.jsx'
 import myPageReducer, { initialState } from '../reducers/myPageReducer.js'
-import { MOCK_MY_QUESTIONS, MOCK_MY_ANSWERS, MOCK_MY_COMMENTS } from '../constants/mockData.js'
+import { MOCK_MY_ANSWERS, MOCK_MY_COMMENTS } from '../constants/mockData.js'
 import { getMyQuestions } from '../api/questionApi.js'
 import { requestHandler } from '../util/requestHandler.js'
 import { mapQuestionListItem } from '../util/questionMapper.js'
+import { formatDateTime } from '../util/dateUtil.js'
 
 const PAGE_SIZE = 5
-
-function getRows(tab) {
-  if (tab === 'questions') return MOCK_MY_QUESTIONS
-  if (tab === 'answers') return MOCK_MY_ANSWERS
-  return MOCK_MY_COMMENTS
-}
 
 const EMPTY_MSG = {
   questions: '작성한 게시글이 없습니다.',
@@ -26,6 +22,7 @@ const EMPTY_MSG = {
 function MyPage() {
   const { state: appState, dispatch: appDispatch } = useAppContext()
   const [state, dispatch] = useReducer(myPageReducer, initialState)
+  const navigate = useNavigate()
 
   const { activeTab, pages, myQuestions } = state
   const questionsPage = pages.questions
@@ -92,7 +89,7 @@ function MyPage() {
       <div className="panel">
         <div className="auth-tabs auth-tabs--mb">
           {[
-            ['questions', '내 질문', MOCK_MY_QUESTIONS.length],
+            ['questions', '내 질문', myQuestions.totalCount],
             ['answers', '내 답변', MOCK_MY_ANSWERS.length],
             ['comments', '내 댓글', MOCK_MY_COMMENTS.length],
           ].map(([tab, label, count]) => (
@@ -115,7 +112,11 @@ function MyPage() {
           )}
 
           {activeTab === 'questions' && !isQuestionsBusy && !questionsError && shown.map(q => (
-            <div key={q.id} className="mini-row">
+            <div
+              key={q.id}
+              className="mini-row mini-row--link"
+              onClick={() => navigate(`/questions/${q.id}`)} // 클릭 시 게시글 상세로 이동
+            >
               <span className="t">{q.title}</span>
               <span className="mini-meta">
                 <span>♡ {q.likes}</span>

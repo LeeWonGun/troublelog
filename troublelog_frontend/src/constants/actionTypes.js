@@ -23,6 +23,8 @@ export const APP = {
   // 전역 에러 모달
   SHOW_ERROR:              'APP/SHOW_ERROR', // 전역 에러 모달 표시
   HIDE_ERROR:              'APP/HIDE_ERROR', // 전역 에러 모달 닫기
+
+  SET_TECH_STACKS:         'APP/SET_TECH_STACKS', // 기술 스택 목록 세팅 (작성/검색 공용)
 }
 
 export const QLIST = {
@@ -37,6 +39,7 @@ export const QLIST = {
   SET_LOADING:       'QLIST/SET_LOADING',   // 목록/검색 API 요청 시작
   SET_POSTS:         'QLIST/SET_POSTS',     // 목록/검색 API 요청 성공
   SET_ERROR:         'QLIST/SET_ERROR',     // 목록/검색 API 요청 실패
+  APPLY_FILTERS:     'QLIST/APPLY_FILTERS', // 전역 검색 조건(검색어+상태+스택)을 한 번에 확정 반영
 }
 
 export const QDETAIL = {
@@ -49,6 +52,8 @@ export const QDETAIL = {
   SET_QUESTION:       'QDETAIL/SET_QUESTION',
   SET_ANSWERS:        'QDETAIL/SET_ANSWERS',
   SET_ERROR:          'QDETAIL/SET_ERROR',
+  SET_LIKE:           'QDETAIL/SET_LIKE',           // 좋아요 등록/취소 API 응답 반영
+  SET_DELETE_CONFIRM: 'QDETAIL/SET_DELETE_CONFIRM', // 게시글 삭제 확인 모달 열기/닫기
 }
 
 export const WRITE = {
@@ -58,6 +63,7 @@ export const WRITE = {
   ADD_IMAGE:     'WRITE/ADD_IMAGE',
   REMOVE_IMAGE:  'WRITE/REMOVE_IMAGE',
   RESET:         'WRITE/RESET',
+  SET_ERROR:     'WRITE/SET_ERROR', // 폼 유효성/제출 실패 에러 메시지
 }
 
 export const MYPAGE = {

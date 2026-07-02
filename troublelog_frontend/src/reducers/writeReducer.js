@@ -10,15 +10,28 @@ export const initialState = {
   triedMethods: '',
   visibility: 'PUBLIC',  // PUBLIC | TEAM
   selectedTeamId: '',
-  stackToggles: {},      // 'language-Java' -> bool
+  stackToggles: {},      // techStackId -> bool
   images: [],            // 첨부 이미지 (최대 4개)
+  error: '',             // 폼 유효성/제출 실패 에러 메시지 (빈 문자열이면 비표시)
+
+  // 수정 페이지 전용: 기존 게시글 조회 상태 (작성 페이지는 항상 false/'')
+  loading: false,
+  loadError: '',
 }
 
 const writeReducer = (state, action) => {
   switch (action.type) {
     case WRITE.SET_FIELD:
       return { ...state, [action.field]: action.value }
-      
+
+    // 수정 페이지: GET 응답으로 폼 상태 pre-fill 완료
+    case WRITE.PREFILL:
+      return { ...state, ...action.payload, loading: false, loadError: '' }
+
+    // 수정 페이지: 기존 게시글 조회 실패
+    case WRITE.LOAD_FAILED:
+      return { ...state, loading: false, loadError: action.payload }
+
     case WRITE.SET_VISIBILITY:
       return {
         ...state,
@@ -41,6 +54,9 @@ const writeReducer = (state, action) => {
 
     case WRITE.RESET:
       return { ...initialState }
+
+    case WRITE.SET_ERROR:
+      return { ...state, error: action.payload }
 
     default:
       return state

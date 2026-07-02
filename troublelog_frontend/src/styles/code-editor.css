@@ -1,0 +1,22 @@
+/* 오류 코드 입력용 Monaco 에디터 (CodeEditor.jsx) */
+.code-editor { display: flex; flex-direction: column; gap: 8px; }
+
+.code-editor-lang { width: 160px; }
+
+.code-editor-frame {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden; /* Monaco 내부 캔버스가 radius 밖으로 나가지 않도록 클리핑 */
+}
+
+.code-editor-frame:focus-within { border-color: var(--blue); }
+
+.code-editor-loading {
+  height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: var(--bg-surface);
+}

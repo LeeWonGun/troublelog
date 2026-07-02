@@ -18,3 +18,18 @@ export const formatDateTime = (isoString) => {
 
   return `${y}.${m}.${d} ${h}:${mi}`
 }
+
+/**
+ * 백엔드 LocalDateTime(ISO 문자열)을 "YYYY-MM-DD" 형태로 변환한다.
+ * 목록/랭킹처럼 시간 없이 날짜만 표시할 때 사용한다.
+ */
+export const formatDate = (isoString) => {
+  if (!isoString) return ''
+
+  const date = new Date(isoString)
+  if (Number.isNaN(date.getTime())) return '' // 잘못된 날짜 문자열 방어
+
+  const pad = (n) => String(n).padStart(2, '0')
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}

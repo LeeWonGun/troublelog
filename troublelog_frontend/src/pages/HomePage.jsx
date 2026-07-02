@@ -6,6 +6,7 @@ import PostRow from '../components/common/PostRow.jsx'
 import { getPopularQuestions, getPublicQuestions } from '../api/questionApi.js'
 import { requestHandler } from '../util/requestHandler.js'
 import { mapQuestionListItem } from '../util/questionMapper.js'
+import { formatDate } from '../util/dateUtil.js'
 
 // 인기 게시글 랭킹 아이템
 function RankItem({ post, rank, onClick }) {
@@ -15,7 +16,7 @@ function RankItem({ post, rank, onClick }) {
       <span className="rank-title" onClick={onClick}>{post.title}</span>
       <StatusChip solved={post.status === 'SOLVED'} />
       <span className="rank-meta like">♡ {post.likes}</span>
-      <span className="rank-meta">{post.createdAt}</span>
+      <span className="rank-meta">{formatDate(post.createdAt)}</span>
     </div>
   )
 }

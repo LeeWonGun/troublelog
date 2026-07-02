@@ -1,6 +1,7 @@
 import { APP } from '../../constants/actionTypes.js'
 import StackSelector from '../common/StackSelector.jsx'
 import ModalOverlay from '../common/ModalOverlay.jsx'
+import { groupTechStacksByCategory } from '../../util/techStackUtil.js'
 
 function SearchDetailModal({ state, dispatch }) {
   const close = () => dispatch({ type: APP.CLOSE_MODAL })
@@ -18,7 +19,9 @@ function SearchDetailModal({ state, dispatch }) {
       </div>
 
       <div className="field-label field-label--mb">기술 스택</div>
+      {/* API 기술 스택 목록 기반 - toggle key가 techStackId라서 검색 API techStackIds 파라미터로 바로 변환 가능 */}
       <StackSelector
+        categories={groupTechStacksByCategory(state.techStacks)}
         toggles={state.searchStackToggles}
         onToggle={key => dispatch({ type: APP.TOGGLE_SEARCH_STACK, payload: key })}
       />
