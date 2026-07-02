@@ -25,13 +25,26 @@
     </insert>
     
     
-    <!-- 질문 작성자 여부 확인 -->
+    <!-- 
+	  질문 작성자 여부 확인.
+	  TEAM 질문인 경우, 작성자 본인이어도 현재 팀에서 탈퇴(team_members.delflag='Y')했다면 
+	  권한을 잃는다. PUBLIC 질문은 팀 개념이 없으므로 작성자 여부만 확인한다.
+	-->
 	<select id="existsQuestionWriter" resultType="int">
-		SELECT COUNT(*)
-        FROM questions
-        WHERE id = #{questionId}
-          AND writer_id = #{userId}
-          AND delflag = 'N'
+	    SELECT COUNT(*)
+	    FROM questions q
+	    WHERE q.id = #{questionId}
+	      AND q.writer_id = #{userId}
+	      AND q.delflag = 'N'
+	      AND (
+	          q.visibility = 'PUBLIC'
+	          OR EXISTS (
+	              SELECT 1 FROM team_members tm
+	              WHERE tm.team_id = q.team_id
+	                AND tm.user_id = #{userId}
+	                AND tm.delflag = 'N'
+	          )
+	      )
 	</select>
 	
 	

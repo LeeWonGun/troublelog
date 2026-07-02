@@ -84,6 +84,7 @@ public class SecurityConfig {
                                 "/api/questions/*",
                                 "/api/questions/*/answers",
                                 "/api/files/*",
+                                "/api/files/static/**",
                                 "/api/tech-stacks"
                         ).permitAll()
                         

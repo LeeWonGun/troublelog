@@ -1,5 +1,6 @@
 package com.min.edu.file.storage;
 
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -14,5 +15,8 @@ public interface FileStorage {
 	
 	// 저장된 파일명을 바탕으로 외부에서 접근 가능한 URL(file_url)을 생성한다.
 	String resolveUrl(String uploadFilename);
+	
+	// 실제 저장된 파일을 디스크에서 읽어와, 브라우저에 바이너리로 전송할 수 있는 형태(Resource)로 반환한다.
+	Resource loadAsResource(String filePath);
 
 }

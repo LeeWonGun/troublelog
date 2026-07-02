@@ -2,6 +2,7 @@ package com.min.edu.file.service;
 
 import java.util.UUID;
 
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.min.edu.common.exception.BusinessException;
 import com.min.edu.common.exception.ErrorCode;
 import com.min.edu.file.FileConstants;
+import com.min.edu.file.dto.FileResourceResponse;
 import com.min.edu.file.dto.FileResponse;
 import com.min.edu.file.entity.QuestionFileEntity;
 import com.min.edu.file.repository.QuestionFileMapper;
@@ -136,5 +138,46 @@ public class QuestionFileService {
     	return toResponse(file);
     }
 	
+    
+    // 첨부 파일을 삭제한다. (소프트 삭제, 작성자만 가능)
+    @Transactional
+    public void deleteFile(Long fileId, Long userId) {
+    	
+    	QuestionFileEntity file = questionFileRepository.findById(fileId)
+    			.filter(QuestionFileEntity::isActive)
+    			.orElseThrow(() -> new BusinessException("존재하지 않는 파일입니다.", ErrorCode.FILE_NOT_FOUND));
+    	
+    	int isWriter = questionFileMapper.existsQuestionWriter(file.getQuestionId(), userId);
+    	
+    	if(isWriter == 0) {
+    		throw new BusinessException("파일을 삭제할 권한이 없습니다.", ErrorCode.FORBIDDEN);
+    	}
+    	
+    	file.softDelete(); // JPA dirty checking으로 트랜잭션 커밋 시점에 UPDATE 반영
+
+    }
+    
+    
+    /* 
+     * 첨부 파일의 실제 바이너리 데이터를 조회한다. (이미지 서빙용) 
+     * GET /api/files/{fileId}(메타데이터 조회)와 동일한 권한 체크를 거친 뒤,
+     * 실제 이미지 데이터를 꺼내서 반환한다. (TEAM 게시글 이미지가 URL만으로 뚫리는 걸 막기 위함)
+     */
+    public FileResourceResponse getFileResource(String uploadFilename, Long userId) {
+
+    	QuestionFileEntity file = questionFileRepository.findByUploadFilename(uploadFilename)
+    			.filter(QuestionFileEntity::isActive)
+    			.orElseThrow(() -> new BusinessException("존재하지 않는 파일입니다.", ErrorCode.FILE_NOT_FOUND));
+
+    	int accessible = questionFileMapper.existsAccessibleQuestion(file.getQuestionId(), userId);
+
+    	if (accessible == 0) {
+    		throw new BusinessException("존재하지 않거나 접근할 수 없는 파일입니다.", ErrorCode.FILE_NOT_FOUND);
+    	}
+
+    	Resource resource = fileStorage.loadAsResource(file.getFilePath());
+
+    	return new FileResourceResponse(resource, file.getContentType());
+    }
 
 }
