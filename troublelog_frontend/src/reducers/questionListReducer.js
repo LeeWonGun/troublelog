@@ -37,6 +37,15 @@ const questionListReducer = (state, action) => {
     case QLIST.SET_KEYWORD:
       return { ...state, keyword: action.payload, currentPage: 1 }
 
+    case QLIST.APPLY_FILTERS:
+      return {
+        ...state,
+        keyword: action.payload.keyword.trim(),
+        filterStatus: action.payload.filterStatus,
+        filterTags: action.payload.filterTags,
+        currentPage: 1,
+      }
+
     case QLIST.TOGGLE_TAG_FILTER: {
       const tags = state.filterTags.includes(action.payload)
         ? state.filterTags.filter(t => t !== action.payload)
