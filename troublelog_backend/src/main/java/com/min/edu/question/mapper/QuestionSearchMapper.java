@@ -12,6 +12,9 @@ import java.util.List;
  * keyword, status, techStackIds, sort, teamId처럼 동적으로 조합되는 검색 조건은
  * JPA Repository보다 MyBatis XML에서 관리하는 것이 더 명확하다.
  */
+/**
+ * 질문 검색처럼 동적 조건이 많은 조회 쿼리를 담당하는 MyBatis Mapper입니다.
+ */
 @Mapper
 public interface QuestionSearchMapper {
 

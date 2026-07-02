@@ -12,4 +12,7 @@ public interface LikeRepository extends JpaRepository<LikeEntity, Long> {
 	Optional<LikeEntity> findByUserIdAndTargetIdAndTargetType(
 			Long userId, Long targetId, LikeEntity.TargetType targetType);
 
+	boolean existsByUserIdAndTargetIdAndTargetType(
+			Long userId, Long targetId, LikeEntity.TargetType targetType);
+
 }

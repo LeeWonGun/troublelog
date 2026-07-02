@@ -36,4 +36,15 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     List<TeamMember> findActiveMembersByTeamId(@Param("teamId") Long teamId);
 
     boolean existsByTeamIdAndUserIdAndDelflag(Long teamId, Long userId, String delflag);
+
+    @Query("""
+            select count(tm) > 0
+            from TeamMember tm
+            join tm.team t
+            where t.id = :teamId
+              and tm.user.id = :userId
+              and tm.delflag = 'N'
+              and t.delflag = 'N'
+            """)
+    boolean existsActiveMemberInActiveTeam(@Param("teamId") Long teamId, @Param("userId") Long userId);
 }

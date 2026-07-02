@@ -1,14 +1,14 @@
 package com.min.edu.auth.controller;
 
 import com.min.edu.auth.domain.EmailVerificationPurpose;
-import com.min.edu.auth.dto.DuplicateCheckResponse;
-import com.min.edu.auth.dto.EmailVerificationResponse;
-import com.min.edu.auth.dto.EmailVerificationSendRequest;
-import com.min.edu.auth.dto.EmailVerificationVerifyRequest;
-import com.min.edu.auth.dto.LoginRequest;
-import com.min.edu.auth.dto.LoginResponse;
-import com.min.edu.auth.dto.PasswordResetRequest;
-import com.min.edu.auth.dto.SignupRequest;
+import com.min.edu.auth.dto.response.DuplicateCheckResponse;
+import com.min.edu.auth.dto.response.EmailVerificationResponse;
+import com.min.edu.auth.dto.request.EmailVerificationSendRequest;
+import com.min.edu.auth.dto.request.EmailVerificationVerifyRequest;
+import com.min.edu.auth.dto.request.LoginRequest;
+import com.min.edu.auth.dto.response.LoginResponse;
+import com.min.edu.auth.dto.request.PasswordResetRequest;
+import com.min.edu.auth.dto.request.SignupRequest;
 import com.min.edu.auth.security.CurrentUser;
 import com.min.edu.auth.security.JwtCookieService;
 import com.min.edu.auth.security.JwtTokenProvider;

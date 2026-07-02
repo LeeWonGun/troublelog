@@ -8,62 +8,40 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 질문 상세 화면의 질문 본문 영역을 표현하는 응답 DTO이다.
+ * 질문 상세 화면에 필요한 본문, 작성자, 팀, 좋아요, 기술 스택 정보를 담는 응답 DTO입니다.
  */
 public record QuestionDetailResponse(
         Long questionId,
         String title,
-
-        // questions.content에 저장된 Markdown 문자열에서 상황 설명만 분리한 값이다.
         String content,
-
-        // Markdown 코드블록의 언어 태그 값이다. 코드가 없으면 null이다.
         String codeLanguage,
-
-        // Markdown 코드블록 안의 코드 내용이다. 코드가 없으면 null이다.
         String code,
-
         String errorMessage,
         String environment,
         String tried,
         Long writerId,
         String writerNickname,
-
-        // PUBLIC 질문이면 teamId는 null이다.
         Long teamId,
-
-        // PUBLIC 질문이면 teamName은 null이다.
         String teamName,
-
-        // UNSOLVED 또는 SOLVED
         String status,
-
-        // PUBLIC 또는 TEAM
         String visibility,
-
-        // 답변 수는 answers.depth = 0인 답변만 기준으로 계산한다.
         int answerCount,
-
         int likeCount,
+        boolean likedByMe,
         int viewCount,
-
-        // 채택된 답변이 없으면 null이다.
         Long acceptedAnswerId,
-
         List<TechStackResponse> techStacks,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
 
-    /**
-     * Question Entity와 content 분리 결과, 기술 스택 목록을 질문 상세 응답 DTO로 변환한다.
-     *
-     * writerNickname, teamName은 회원/팀 구조가 확정된 뒤 연결한다.
-     */
     public static QuestionDetailResponse from(
             Question question,
             QuestionContentParts contentParts,
-            List<TechStackResponse> techStacks
+            List<TechStackResponse> techStacks,
+            String writerNickname,
+            String teamName,
+            boolean likedByMe
     ) {
         return new QuestionDetailResponse(
                 question.getId(),
@@ -75,13 +53,14 @@ public record QuestionDetailResponse(
                 question.getEnvironment(),
                 question.getTried(),
                 question.getWriterId(),
-                null,
+                writerNickname,
                 question.getTeamId(),
-                null,
-                question.getStatus(),
-                question.getVisibility(),
+                teamName,
+                question.getStatus().name(),
+                question.getVisibility().name(),
                 question.getAnswerCount(),
                 question.getLikeCount(),
+                likedByMe,
                 question.getViewCount(),
                 question.getAcceptedAnswerId(),
                 techStacks,

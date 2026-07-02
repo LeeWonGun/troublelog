@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +13,9 @@ import java.time.LocalDateTime;
  *
  * 회원/팀 Entity는 아직 인증 담당 PR과 충돌 가능성이 있으므로,
  * 현재 단계에서는 writerId, teamId를 Long 값으로만 관리한다.
+ */
+/**
+ * 질문 게시글의 본문, 상태, 공개 범위, 집계 정보를 관리하는 Entity입니다.
  */
 @Entity
 @Table(name = "questions")
@@ -48,12 +52,14 @@ public class Question {
     private String tried;
 
     // PUBLIC 또는 TEAM
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String visibility;
+    private QuestionVisibility visibility;
 
     // UNSOLVED 또는 SOLVED
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private QuestionStatus status;
 
     @Column(name = "answer_count", nullable = false)
     private int answerCount;
@@ -72,18 +78,12 @@ public class Question {
     @Column(nullable = false, columnDefinition = "CHAR(1)")
     private String delflag;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    /**
-     * 질문 상세 조회 시 조회수를 1 증가시킨다.
-     */
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
 
     public Question(
             Long writerId,
@@ -93,7 +93,7 @@ public class Question {
             String errorMessage,
             String environment,
             String tried,
-            String visibility
+            QuestionVisibility visibility
     ) {
         this.writerId = writerId;
         this.teamId = teamId;
@@ -103,12 +103,11 @@ public class Question {
         this.environment = environment;
         this.tried = tried;
         this.visibility = visibility;
-        this.status = "UNSOLVED";
+        this.status = QuestionStatus.UNSOLVED;
         this.answerCount = 0;
         this.likeCount = 0;
         this.viewCount = 0;
         this.delflag = "N";
-        this.createdAt = LocalDateTime.now();
     }
 
     public void update(
@@ -118,7 +117,7 @@ public class Question {
             String errorMessage,
             String environment,
             String tried,
-            String visibility
+            QuestionVisibility visibility
     ) {
         this.teamId = teamId;
         this.title = title;
@@ -140,10 +139,10 @@ public class Question {
     }
 
     public boolean isPublicQuestion() {
-        return "PUBLIC".equals(this.visibility);
+        return QuestionVisibility.PUBLIC == this.visibility;
     }
 
     public boolean isTeamQuestion() {
-        return "TEAM".equals(this.visibility);
+        return QuestionVisibility.TEAM == this.visibility;
     }
 }

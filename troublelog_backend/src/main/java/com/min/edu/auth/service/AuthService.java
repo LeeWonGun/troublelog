@@ -1,11 +1,11 @@
 package com.min.edu.auth.service;
 
 import com.min.edu.auth.domain.EmailVerificationPurpose;
-import com.min.edu.auth.dto.DuplicateCheckResponse;
-import com.min.edu.auth.dto.LoginRequest;
-import com.min.edu.auth.dto.LoginResponse;
-import com.min.edu.auth.dto.PasswordResetRequest;
-import com.min.edu.auth.dto.SignupRequest;
+import com.min.edu.auth.dto.response.DuplicateCheckResponse;
+import com.min.edu.auth.dto.request.LoginRequest;
+import com.min.edu.auth.dto.response.LoginResponse;
+import com.min.edu.auth.dto.request.PasswordResetRequest;
+import com.min.edu.auth.dto.request.SignupRequest;
 import com.min.edu.common.exception.BusinessException;
 import com.min.edu.common.exception.ErrorCode;
 import com.min.edu.user.domain.AuthProvider;
