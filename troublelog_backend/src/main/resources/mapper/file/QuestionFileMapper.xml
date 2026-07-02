@@ -34,5 +34,23 @@
           AND delflag = 'N'
 	</select>
 	
+	
+	<!-- 질문 접근 권한 확인: PUBLIC이면 통과, TEAM이면 활성 팀원인지 확인 -->
+	<select id="existsAccessibleQuestion" resultType="int">
+	    SELECT COUNT(*)
+	    FROM questions q
+	    WHERE q.id = #{questionId}
+	      AND q.delflag = 'N'
+	      AND (
+	          q.visibility = 'PUBLIC'
+	          OR EXISTS (
+	              SELECT 1 FROM team_members tm
+	              WHERE tm.team_id = q.team_id
+	                AND tm.user_id = #{userId}
+	                AND tm.delflag = 'N'
+	          )
+	      )
+	</select>
+	
 </mapper>   
  

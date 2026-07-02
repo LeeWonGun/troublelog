@@ -12,6 +12,7 @@ import com.min.edu.file.FileConstants;
 import com.min.edu.file.dto.FileResponse;
 import com.min.edu.file.entity.QuestionFileEntity;
 import com.min.edu.file.repository.QuestionFileMapper;
+import com.min.edu.file.repository.QuestionFileRepository;
 import com.min.edu.file.storage.FileStorage;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class QuestionFileService {
 	
 	private final QuestionFileMapper questionFileMapper;
+	private final QuestionFileRepository questionFileRepository;
 	private final FileStorage fileStorage;
 	
 	
@@ -115,6 +117,23 @@ public class QuestionFileService {
                 file.getFileSize(),
                 file.getCreatedAt()
         );
+    }
+    
+    
+    // 첨부 파일을 조회한다. 질문 조회 권한과 동일하게 처리하며, 비회원도 PUBLIC 질문 파일은 조회 가능하다.
+    public FileResponse getFile(Long fileId, Long userId) {
+    	
+    	QuestionFileEntity file = questionFileRepository.findById(fileId)
+    			.filter(QuestionFileEntity::isActive)
+    			.orElseThrow(() -> new BusinessException("존재하지 않는 파일입니다.", ErrorCode.FILE_NOT_FOUND));
+    	
+    	int accessible = questionFileMapper.existsAccessibleQuestion(file.getQuestionId(), userId);
+    	
+    	if (accessible == 0) {
+    		throw new BusinessException("존재하지 않거나 접근할 수 없는 파일입니다.", ErrorCode.FILE_NOT_FOUND);
+    	}
+    	
+    	return toResponse(file);
     }
 	
 

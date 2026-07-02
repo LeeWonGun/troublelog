@@ -1,6 +1,7 @@
 package com.min.edu.file.controller;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -8,6 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.min.edu.auth.security.CurrentUser;
+import com.min.edu.common.exception.BusinessException;
+import com.min.edu.common.exception.ErrorCode;
 import com.min.edu.common.response.ApiResponse;
 import com.min.edu.file.dto.FileResponse;
 import com.min.edu.file.service.QuestionFileService;
@@ -27,10 +30,39 @@ public class QuestionFileController {
             @RequestParam("file") MultipartFile file,
             Authentication authentication
     ) {
+    	
         Long userId = CurrentUser.id(authentication);
         FileResponse response = questionFileService.uploadFile(userId, questionId, file);
 
         return ApiResponse.success("파일이 업로드되었습니다.", response);
     }
+    
+    
+    // 첨부 파일 조회 (PUBLIC 질문은 비회원도 조회 가능)
+ 	@GetMapping("/api/files/{fileId}")
+ 	public ApiResponse<FileResponse> getFile(
+ 			@PathVariable Long fileId,
+ 			Authentication authentication
+ 	) {
+ 		
+ 		Long userId;
+ 		
+ 		try { 	
+ 			
+ 			userId = CurrentUser.id(authentication);
+ 			
+ 		}catch(BusinessException e) {	
+ 			
+ 			if(e.getErrorCode() != ErrorCode.UNAUTHORIZED) {
+ 				 throw e;
+ 			}
+ 			
+ 			userId = null;
+ 		}
+ 		
+ 		FileResponse response = questionFileService.getFile(fileId, userId);
+ 		
+ 		return ApiResponse.success("조회가 완료되었습니다.", response);
+ 	}
 	
 }
