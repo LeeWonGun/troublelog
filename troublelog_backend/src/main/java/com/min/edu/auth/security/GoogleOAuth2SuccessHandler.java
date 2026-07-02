@@ -1,6 +1,6 @@
 package com.min.edu.auth.security;
 
-import com.min.edu.auth.dto.LoginResponse;
+import com.min.edu.auth.dto.response.LoginResponse;
 import com.min.edu.auth.service.AuthService;
 import com.min.edu.user.dto.UserResponse;
 import jakarta.servlet.ServletException;

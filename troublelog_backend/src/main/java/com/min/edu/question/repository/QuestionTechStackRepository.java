@@ -3,6 +3,9 @@ package com.min.edu.question.repository;
 import com.min.edu.question.entity.QuestionTechStack;
 import com.min.edu.question.entity.QuestionTechStackId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -15,5 +18,7 @@ public interface QuestionTechStackRepository extends JpaRepository<QuestionTechS
 
     List<QuestionTechStack> findByQuestionIdIn(List<Long> questionIds);
 
-    void deleteByQuestionId(Long questionId);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from QuestionTechStack qts where qts.questionId = :questionId")
+    void deleteByQuestionId(@Param("questionId") Long questionId);
 }

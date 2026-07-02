@@ -44,8 +44,28 @@ public record QuestionListResponse(
                 question.getTitle(),
                 question.getWriterId(),
                 null,
-                question.getStatus(),
-                question.getVisibility(),
+                question.getStatus().name(),
+                question.getVisibility().name(),
+                question.getAnswerCount(),
+                question.getLikeCount(),
+                question.getViewCount(),
+                techStacks,
+                question.getCreatedAt()
+        );
+    }
+
+    public static QuestionListResponse from(
+            Question question,
+            String writerNickname,
+            List<TechStackResponse> techStacks
+    ) {
+        return new QuestionListResponse(
+                question.getId(),
+                question.getTitle(),
+                question.getWriterId(),
+                writerNickname,
+                question.getStatus().name(),
+                question.getVisibility().name(),
                 question.getAnswerCount(),
                 question.getLikeCount(),
                 question.getViewCount(),

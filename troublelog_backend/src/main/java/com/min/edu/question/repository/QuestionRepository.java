@@ -1,9 +1,14 @@
 package com.min.edu.question.repository;
 
 import com.min.edu.question.entity.Question;
+import com.min.edu.question.entity.QuestionStatus;
+import com.min.edu.question.entity.QuestionVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -16,15 +21,15 @@ import java.util.Optional;
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     Page<Question> findByVisibilityAndDelflag(
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
             Pageable pageable
     );
 
     Page<Question> findByVisibilityAndDelflagAndStatus(
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
-            String status,
+            QuestionStatus status,
             Pageable pageable
     );
 
@@ -37,24 +42,28 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Page<Question> findByWriterIdAndDelflagAndStatus(
             Long writerId,
             String delflag,
-            String status,
+            QuestionStatus status,
             Pageable pageable
     );
 
     Page<Question> findByTeamIdAndVisibilityAndDelflag(
             Long teamId,
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
             Pageable pageable
     );
 
     Page<Question> findByTeamIdAndVisibilityAndDelflagAndStatus(
             Long teamId,
-            String visibility,
+            QuestionVisibility visibility,
             String delflag,
-            String status,
+            QuestionStatus status,
             Pageable pageable
     );
 
     Optional<Question> findByIdAndDelflag(Long id, String delflag);
+
+    @Modifying
+    @Query("update Question q set q.viewCount = q.viewCount + 1 where q.id = :questionId and q.delflag = 'N'")
+    int increaseViewCount(@Param("questionId") Long questionId);
 }

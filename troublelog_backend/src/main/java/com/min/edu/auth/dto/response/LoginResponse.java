@@ -1,4 +1,4 @@
-package com.min.edu.auth.dto;
+package com.min.edu.auth.dto.response;
 
 import com.min.edu.user.dto.UserResponse;
 

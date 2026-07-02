@@ -16,6 +16,9 @@
     -->
     <sql id="questionSearchWhere">
         FROM questions q
+        JOIN users u
+          ON u.id = q.writer_id
+         AND u.delflag = 'N'
         WHERE q.delflag = 'N'
 
         <choose>
@@ -67,7 +70,7 @@
         q.id AS questionId,
         q.title AS title,
         q.writer_id AS writerId,
-        NULL AS writerNickname,
+        u.nickname AS writerNickname,
         q.status AS status,
         q.visibility AS visibility,
         q.answer_count AS answerCount,

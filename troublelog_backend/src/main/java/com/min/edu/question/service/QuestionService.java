@@ -11,15 +11,24 @@ import com.min.edu.question.dto.response.QuestionDetailResponse;
 import com.min.edu.question.dto.response.QuestionListResponse;
 import com.min.edu.question.dto.response.QuestionSearchRow;
 import com.min.edu.question.entity.Question;
+import com.min.edu.question.entity.QuestionStatus;
 import com.min.edu.question.entity.QuestionTechStack;
+import com.min.edu.question.entity.QuestionVisibility;
 import com.min.edu.question.mapper.QuestionSearchMapper;
 import com.min.edu.question.repository.QuestionRepository;
 import com.min.edu.question.repository.QuestionTechStackRepository;
 import com.min.edu.question.util.QuestionContentFormatter;
 import com.min.edu.question.util.QuestionContentParts;
+import com.min.edu.team.domain.Team;
 import com.min.edu.team.repository.TeamMemberRepository;
+import com.min.edu.team.repository.TeamRepository;
 import com.min.edu.techstack.dto.response.TechStackResponse;
+import com.min.edu.techstack.repository.TechStackRepository;
+import com.min.edu.user.domain.User;
+import com.min.edu.user.repository.UserRepository;
 import com.min.edu.user.service.UserService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,8 +52,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QuestionService {
 
-    private static final String VISIBILITY_PUBLIC = "PUBLIC";
-    private static final String VISIBILITY_TEAM = "TEAM";
+    private static final QuestionVisibility VISIBILITY_PUBLIC = QuestionVisibility.PUBLIC;
+    private static final QuestionVisibility VISIBILITY_TEAM = QuestionVisibility.TEAM;
     private static final String DELFLAG_NORMAL = "N";
 
     private static final String STATUS_UNSOLVED = "UNSOLVED";
@@ -61,7 +70,13 @@ public class QuestionService {
     private final QuestionTechStackRepository questionTechStackRepository;
     private final QuestionSearchMapper questionSearchMapper;
     private final TeamMemberRepository teamMemberRepository;
+    private final TeamRepository teamRepository;
+    private final TechStackRepository techStackRepository;
+    private final UserRepository userRepository;
     private final UserService userService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public PageResponse<QuestionListResponse> getPublicQuestions(
@@ -81,7 +96,7 @@ public class QuestionService {
             questionPage = questionRepository.findByVisibilityAndDelflagAndStatus(
                     VISIBILITY_PUBLIC,
                     DELFLAG_NORMAL,
-                    normalizedSort,
+                    QuestionStatus.valueOf(normalizedSort),
                     pageable
             );
         } else {
@@ -101,12 +116,15 @@ public class QuestionService {
 
         validateQuestionAccess(question, currentUserId);
 
-        question.increaseViewCount();
+        questionRepository.increaseViewCount(question.getId());
+        entityManager.refresh(question);
 
         QuestionContentParts contentParts = QuestionContentFormatter.parse(question.getContent());
         List<TechStackResponse> techStacks = getTechStacks(question.getId());
+        String writerNickname = getWriterNickname(question.getWriterId());
+        String teamName = getTeamName(question.getTeamId());
 
-        return QuestionDetailResponse.from(question, contentParts, techStacks);
+        return QuestionDetailResponse.from(question, contentParts, techStacks, writerNickname, teamName);
     }
 
     @Transactional(readOnly = true)
@@ -128,7 +146,7 @@ public class QuestionService {
     public QuestionCreateResponse createQuestion(Long currentUserId, QuestionCreateRequest request) {
         userService.getActiveUser(currentUserId);
 
-        String visibility = normalizeVisibility(request.visibility());
+        QuestionVisibility visibility = normalizeVisibility(request.visibility());
         Long teamId = resolveTeamIdForWrite(visibility, request.teamId(), currentUserId);
 
         validateRequiredText(request.title(), "질문 제목을 입력해 주세요.");
@@ -178,7 +196,7 @@ public class QuestionService {
             questionPage = questionRepository.findByWriterIdAndDelflagAndStatus(
                     currentUserId,
                     DELFLAG_NORMAL,
-                    normalizedSort,
+                    QuestionStatus.valueOf(normalizedSort),
                     pageable
             );
         } else {
@@ -198,7 +216,7 @@ public class QuestionService {
 
         validateQuestionWriter(question, currentUserId);
 
-        String visibility = normalizeVisibility(request.visibility());
+        QuestionVisibility visibility = normalizeVisibility(request.visibility());
         Long teamId = resolveTeamIdForWrite(visibility, request.teamId(), currentUserId);
 
         validateRequiredText(request.title(), "질문 제목을 입력해 주세요.");
@@ -256,7 +274,7 @@ public class QuestionService {
                     teamId,
                     VISIBILITY_TEAM,
                     DELFLAG_NORMAL,
-                    normalizedSort,
+                    QuestionStatus.valueOf(normalizedSort),
                     pageable
             );
         } else {
@@ -354,7 +372,7 @@ public class QuestionService {
         }
     }
 
-    private Long resolveTeamIdForWrite(String visibility, Long teamId, Long currentUserId) {
+    private Long resolveTeamIdForWrite(QuestionVisibility visibility, Long teamId, Long currentUserId) {
         if (VISIBILITY_PUBLIC.equals(visibility)) {
             return null;
         }
@@ -372,11 +390,7 @@ public class QuestionService {
             throw new BusinessException("팀원만 접근할 수 있습니다.", ErrorCode.FORBIDDEN);
         }
 
-        boolean joined = teamMemberRepository.existsByTeamIdAndUserIdAndDelflag(
-                teamId,
-                userId,
-                DELFLAG_NORMAL
-        );
+        boolean joined = teamMemberRepository.existsActiveMemberInActiveTeam(teamId, userId);
 
         if (!joined) {
             throw new BusinessException("팀원만 접근할 수 있습니다.", ErrorCode.FORBIDDEN);
@@ -389,6 +403,8 @@ public class QuestionService {
         if (normalizedTechStackIds.isEmpty()) {
             return;
         }
+
+        validateActiveTechStacks(normalizedTechStackIds);
 
         List<QuestionTechStack> questionTechStacks = normalizedTechStackIds.stream()
                 .map(techStackId -> new QuestionTechStack(questionId, techStackId))
@@ -407,10 +423,12 @@ public class QuestionService {
                 .toList();
 
         Map<Long, List<TechStackResponse>> techStackMap = getTechStackMap(questionIds);
+        Map<Long, String> writerNicknameMap = getWriterNicknameMap(questions);
 
         return questions.stream()
                 .map(question -> QuestionListResponse.from(
                         question,
+                        writerNicknameMap.get(question.getWriterId()),
                         techStackMap.getOrDefault(question.getId(), Collections.emptyList())
                 ))
                 .toList();
@@ -451,11 +469,56 @@ public class QuestionService {
                 ));
     }
 
+    private Map<Long, String> getWriterNicknameMap(List<Question> questions) {
+        List<Long> writerIds = questions.stream()
+                .map(Question::getWriterId)
+                .distinct()
+                .toList();
+
+        if (writerIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return userRepository.findAllById(writerIds)
+                .stream()
+                .filter(user -> !user.isDeleted())
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+    }
+
+    private String getWriterNickname(Long writerId) {
+        if (writerId == null) {
+            return null;
+        }
+
+        return userRepository.findById(writerId)
+                .filter(user -> !user.isDeleted())
+                .map(User::getNickname)
+                .orElse(null);
+    }
+
+    private String getTeamName(Long teamId) {
+        if (teamId == null) {
+            return null;
+        }
+
+        return teamRepository.findById(teamId)
+                .filter(team -> !team.isDeleted())
+                .map(Team::getName)
+                .orElse(null);
+    }
+
     private List<TechStackResponse> getTechStacks(Long questionId) {
         return questionTechStackRepository.findByQuestionId(questionId)
                 .stream()
                 .map(questionTechStack -> TechStackResponse.from(questionTechStack.getTechStack()))
                 .toList();
+    }
+
+    private void validateActiveTechStacks(List<Long> techStackIds) {
+        long activeCount = techStackRepository.countByIdInAndActiveTrue(techStackIds);
+        if (activeCount != techStackIds.size()) {
+            throw new BusinessException("Invalid tech stack id.", ErrorCode.INVALID_REQUEST);
+        }
     }
 
     private Pageable createPageable(int page, int size, String sort) {
@@ -503,18 +566,18 @@ public class QuestionService {
         return keyword == null ? "" : keyword.trim();
     }
 
-    private String normalizeVisibility(String visibility) {
+    private QuestionVisibility normalizeVisibility(String visibility) {
         if (visibility == null || visibility.isBlank()) {
             return VISIBILITY_PUBLIC;
         }
 
         String normalizedVisibility = visibility.trim().toUpperCase();
 
-        if (!VISIBILITY_PUBLIC.equals(normalizedVisibility) && !VISIBILITY_TEAM.equals(normalizedVisibility)) {
+        if (!VISIBILITY_PUBLIC.name().equals(normalizedVisibility) && !VISIBILITY_TEAM.name().equals(normalizedVisibility)) {
             throw new BusinessException("질문 공개 범위가 올바르지 않습니다.", ErrorCode.INVALID_REQUEST);
         }
 
-        return normalizedVisibility;
+        return QuestionVisibility.valueOf(normalizedVisibility);
     }
 
     private String normalizeSort(String sort) {

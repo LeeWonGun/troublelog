@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -48,12 +49,14 @@ public class Question {
     private String tried;
 
     // PUBLIC 또는 TEAM
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String visibility;
+    private QuestionVisibility visibility;
 
     // UNSOLVED 또는 SOLVED
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status;
+    private QuestionStatus status;
 
     @Column(name = "answer_count", nullable = false)
     private int answerCount;
@@ -72,6 +75,7 @@ public class Question {
     @Column(nullable = false, columnDefinition = "CHAR(1)")
     private String delflag;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -93,7 +97,7 @@ public class Question {
             String errorMessage,
             String environment,
             String tried,
-            String visibility
+            QuestionVisibility visibility
     ) {
         this.writerId = writerId;
         this.teamId = teamId;
@@ -103,12 +107,11 @@ public class Question {
         this.environment = environment;
         this.tried = tried;
         this.visibility = visibility;
-        this.status = "UNSOLVED";
+        this.status = QuestionStatus.UNSOLVED;
         this.answerCount = 0;
         this.likeCount = 0;
         this.viewCount = 0;
         this.delflag = "N";
-        this.createdAt = LocalDateTime.now();
     }
 
     public void update(
@@ -118,7 +121,7 @@ public class Question {
             String errorMessage,
             String environment,
             String tried,
-            String visibility
+            QuestionVisibility visibility
     ) {
         this.teamId = teamId;
         this.title = title;
@@ -140,10 +143,10 @@ public class Question {
     }
 
     public boolean isPublicQuestion() {
-        return "PUBLIC".equals(this.visibility);
+        return QuestionVisibility.PUBLIC == this.visibility;
     }
 
     public boolean isTeamQuestion() {
-        return "TEAM".equals(this.visibility);
+        return QuestionVisibility.TEAM == this.visibility;
     }
 }

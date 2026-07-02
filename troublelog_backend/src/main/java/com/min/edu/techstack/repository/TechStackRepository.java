@@ -17,4 +17,6 @@ public interface TechStackRepository extends JpaRepository<TechStack, Long> {
      * 프론트에서 분류별로 보여주기 쉽도록 category, name 순서로 정렬한다.
      */
     List<TechStack> findByActiveTrueOrderByCategoryAscNameAsc();
+
+    long countByIdInAndActiveTrue(List<Long> ids);
 }

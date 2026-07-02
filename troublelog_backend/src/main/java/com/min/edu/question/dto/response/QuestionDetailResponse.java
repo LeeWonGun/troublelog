@@ -78,8 +78,40 @@ public record QuestionDetailResponse(
                 null,
                 question.getTeamId(),
                 null,
-                question.getStatus(),
-                question.getVisibility(),
+                question.getStatus().name(),
+                question.getVisibility().name(),
+                question.getAnswerCount(),
+                question.getLikeCount(),
+                question.getViewCount(),
+                question.getAcceptedAnswerId(),
+                techStacks,
+                question.getCreatedAt(),
+                question.getUpdatedAt()
+        );
+    }
+
+    public static QuestionDetailResponse from(
+            Question question,
+            QuestionContentParts contentParts,
+            List<TechStackResponse> techStacks,
+            String writerNickname,
+            String teamName
+    ) {
+        return new QuestionDetailResponse(
+                question.getId(),
+                question.getTitle(),
+                contentParts.content(),
+                contentParts.codeLanguage(),
+                contentParts.code(),
+                question.getErrorMessage(),
+                question.getEnvironment(),
+                question.getTried(),
+                question.getWriterId(),
+                writerNickname,
+                question.getTeamId(),
+                teamName,
+                question.getStatus().name(),
+                question.getVisibility().name(),
                 question.getAnswerCount(),
                 question.getLikeCount(),
                 question.getViewCount(),
