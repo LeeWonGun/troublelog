@@ -31,7 +31,7 @@ function HomePage() {
     //TODO: 인기 게시글 조회 (BE 미구현 API - 추후 확인)
     requestHandler(() => getPopularQuestions(), {
       isCancelled: () => ignore,
-      onSuccess: (data) => setPopularPosts(data ?? []),
+      onSuccess: (data) => setPopularPosts(data.content ?? []),
       onFail: (message) => console.error('인기 게시글 로드 실패:', message),
     })
 

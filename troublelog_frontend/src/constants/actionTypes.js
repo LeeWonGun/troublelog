@@ -88,3 +88,12 @@ export const CHANGE_PASS = {
   SHOW_CODE:    'CHANGE_PASS/SHOW_CODE',    // 이메일 인증 코드 입력 섹션 표시
   SET_VERIFIED: 'CHANGE_PASS/SET_VERIFIED', // 이메일 인증 완료 여부 세팅
 }
+
+export const EDIT_PROFILE = {
+  SET_TAB:              'EDIT_PROFILE/SET_TAB',              // 닉네임/비밀번호 탭 전환
+  SET_FIELD:            'EDIT_PROFILE/SET_FIELD',
+  SET_ERROR:            'EDIT_PROFILE/SET_ERROR',
+  SHOW_CODE:            'EDIT_PROFILE/SHOW_CODE',            // 이메일 인증 코드 입력 섹션 표시
+  SET_VERIFIED:         'EDIT_PROFILE/SET_VERIFIED',         // 이메일 인증 완료 여부
+  SET_NICKNAME_CHECKED: 'EDIT_PROFILE/SET_NICKNAME_CHECKED', // 닉네임 중복확인 완료 여부
+}

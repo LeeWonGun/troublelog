@@ -1,4 +1,4 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useAppContext } from '../context/AppContext.jsx'
 import { APP, MYPAGE } from '../constants/actionTypes.js'
 import { MODAL } from '../constants/modalTypes.js'
