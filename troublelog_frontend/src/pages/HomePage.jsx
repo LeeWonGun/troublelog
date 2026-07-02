@@ -28,8 +28,8 @@ function HomePage() {
   useEffect(() => {
     let ignore = false
 
-    //TODO: 인기 게시글 조회 (BE 미구현 API - 추후 확인)
-    requestHandler(() => getPopularQuestions(), {
+    // 인기 게시글 조회
+    requestHandler(() => getPopularQuestions({ page: 0, size: 5 }), {
       isCancelled: () => ignore,
       onSuccess: (data) => setPopularPosts(data.content ?? []),
       onFail: (message) => console.error('인기 게시글 로드 실패:', message),

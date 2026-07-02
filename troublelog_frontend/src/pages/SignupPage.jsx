@@ -123,7 +123,7 @@ function SignupPage() {
       return
     }
 
-    await requestHandler(() => signup({ email: state.email, password: state.password, nickname: state.nickname, verificationCode: state.emailCode}), {
+    await requestHandler(() => signup({ email: state.email, password: state.password, nickname: state.nickname, verificationCode: state.emailCode }), {
       onSuccess: () => navigate('/'),
       onFail: (message) => dispatch({ type: SIGNUP.SET_ERROR, payload: message }),
       fallbackMessage: '회원가입 중 에러가 발생했습니다.',
@@ -221,13 +221,16 @@ function SignupPage() {
         <div className="form-group">
           <div className="input-row">
             <input
-              className="input"
+              className={`input${state.nicknameChecked ? ' input--success' : ''}`}
               placeholder="닉네임 입력"
               value={state.nickname}
               onChange={set('nickname')}
             />
-            <button className="btn btn-ghost btn-sm" onClick={handleCheckNickname}>중복확인</button>
+            <button className="btn btn-ghost btn-sm" onClick={handleCheckNickname} disabled={state.nicknameChecked}>
+              {state.nicknameChecked ? '확인 완료' : '중복확인'}
+            </button>
           </div>
+        {state.nicknameChecked && <div className="copy-feedback" style={{ marginTop: 5, marginLeft: 5 }}>사용 가능한 닉네임입니다.</div>}
         </div>
 
         {state.error && <div className="alert-banner">{state.error}</div>}

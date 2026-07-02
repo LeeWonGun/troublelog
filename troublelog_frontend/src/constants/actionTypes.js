@@ -65,6 +65,7 @@ export const MYPAGE = {
   SET_PAGE: 'MYPAGE/SET_PAGE',
 
   // API 연동
+  SET_LOADING: 'MYPAGE/SET_LOADING', // 내 질문 목록 요청 시작
   SET_DATA:    'MYPAGE/SET_DATA',
   SET_ERROR:   'MYPAGE/SET_ERROR',
 }
