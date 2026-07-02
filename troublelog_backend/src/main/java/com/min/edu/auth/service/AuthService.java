@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.Optional;
 
 /**
  * 회원가입, 로그인, 중복 검사, 비밀번호 재설정 비즈니스 로직을 담당하는 Service이다.
@@ -145,13 +146,27 @@ public class AuthService {
     @Transactional
     public LoginResponse loginOrSignupGoogle(String email, String providerId) {
         User user = userRepository.findByAuthProviderAndProviderIdAndDelflag(AuthProvider.GOOGLE, providerId, "N")
-                .orElseGet(() -> userRepository.save(new User(
-                        email,
-                        null,
-                        generateRandomNickname(),
-                        AuthProvider.GOOGLE,
-                        providerId
-                )));
+                .orElseGet(() -> {
+                    Optional<User> existingUser = userRepository.findByEmailAndDelflag(email, "N");
+                    if (existingUser.isPresent()) {
+                        User existing = existingUser.get();
+                        if (existing.isLocalUser()) {
+                            throw new BusinessException(
+                                    "이미 이메일 회원가입된 계정입니다. 이메일/비밀번호로 로그인해 주세요.",
+                                    ErrorCode.INVALID_AUTH_PROVIDER
+                            );
+                        }
+                        return existing;
+                    }
+
+                    return userRepository.save(new User(
+                            email,
+                            null,
+                            generateRandomNickname(),
+                            AuthProvider.GOOGLE,
+                            providerId
+                    ));
+                });
 
         return LoginResponse.jwtCookie(UserResponse.from(user));
     }

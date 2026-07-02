@@ -22,6 +22,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,6 +31,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 /**
  * 회원가입, 로그인, 이메일 인증, 비밀번호 재설정 API를 제공하는 Controller이다.
@@ -100,6 +103,14 @@ public class AuthController {
     /**
      * 회원가입 전에 이메일 사용 가능 여부를 확인한다.
      */
+    @GetMapping("/csrf")
+    public ApiResponse<Map<String, String>> csrf(CsrfToken csrfToken) {
+        return ApiResponse.success("CSRF token issued.", Map.of(
+                "headerName", csrfToken.getHeaderName(),
+                "token", csrfToken.getToken()
+        ));
+    }
+
     @GetMapping("/check-email")
     public ApiResponse<DuplicateCheckResponse> checkEmail(
             @RequestParam @NotBlank @Email String email

@@ -2,6 +2,7 @@ package com.min.edu.auth.security;
 
 import com.min.edu.auth.dto.response.LoginResponse;
 import com.min.edu.auth.service.AuthService;
+import com.min.edu.common.exception.BusinessException;
 import com.min.edu.user.dto.UserResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -52,20 +53,36 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
             return;
         }
 
-        LoginResponse loginResponse = authServiceProvider.getObject().loginOrSignupGoogle(email, providerId);
+        LoginResponse loginResponse;
+        try {
+            loginResponse = authServiceProvider.getObject().loginOrSignupGoogle(email, providerId);
+        } catch (BusinessException e) {
+            response.sendRedirect(oauthErrorRedirectUri(e.getErrorCode().name()));
+            return;
+        }
+
         UserResponse user = loginResponse.user();
         String token = jwtTokenProvider.createToken(user.userId());
         response.addHeader(HttpHeaders.SET_COOKIE, jwtCookieService.accessTokenCookie(token).toString());
 
         String redirectUri = UriComponentsBuilder.fromUriString(successRedirectUri)
-                .queryParam("userId", user.userId())
-                .queryParam("email", user.email())
-                .queryParam("nickname", user.nickname())
-                .queryParam("authProvider", user.authProvider())
+                .replaceQuery(null)
+                .fragment(null)
                 .build()
                 .encode()
                 .toUriString();
 
         response.sendRedirect(redirectUri);
+    }
+
+    private String oauthErrorRedirectUri(String errorCode) {
+        return UriComponentsBuilder.fromUriString(successRedirectUri)
+                .replacePath("/login")
+                .replaceQuery(null)
+                .fragment(null)
+                .queryParam("oauthError", errorCode)
+                .build()
+                .encode()
+                .toUriString();
     }
 }
