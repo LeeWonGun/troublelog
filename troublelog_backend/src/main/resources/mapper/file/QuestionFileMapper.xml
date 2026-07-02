@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="com.min.edu.file.repository.QuestionFileMapper">
+	
+	<!-- 질문당 활성 파일 1개 제한 확인 -->
+	<select id="existsActiveFile" resultType="int">
+		SELECT COUNT(*)
+        FROM question_files
+        WHERE question_id = #{questionId}
+          AND delflag = 'N'
+	</select>
+	
+	
+	<!-- 파일 업로드 INSERT -->
+	<insert id="insertFile" parameterType="com.min.edu.file.entity.QuestionFileEntity"
+	        useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO question_files
+            (question_id, original_filename, upload_filename, file_path,
+             file_url, content_type, file_size, delflag, created_at)
+        VALUES
+            (#{questionId}, #{originalFilename}, #{uploadFilename}, #{filePath},
+             #{fileUrl}, #{contentType}, #{fileSize}, #{delflag}, #{createdAt})
+    </insert>
+    
+    
+    <!-- 질문 작성자 여부 확인 -->
+	<select id="existsQuestionWriter" resultType="int">
+		SELECT COUNT(*)
+        FROM questions
+        WHERE id = #{questionId}
+          AND writer_id = #{userId}
+          AND delflag = 'N'
+	</select>
+	
+</mapper>   
+ 
