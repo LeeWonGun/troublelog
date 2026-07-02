@@ -3,21 +3,38 @@ import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext.jsx'
 import { WRITE } from '../constants/actionTypes.js'
 import StackSelector from '../components/common/StackSelector.jsx'
+import CodeEditor from '../components/common/CodeEditor.jsx'
 import writeReducer, { initialState } from '../reducers/writeReducer.js'
-
-// 오류 코드 언어 선택 옵션 (목업 기준)
-const LANG_OPTIONS = ['Java', 'Python', 'JavaScript', 'TypeScript', 'Kotlin', 'Go', 'SQL', '기타']
+import { createQuestion } from '../api/questionApi.js'
+import { requestHandler } from '../util/requestHandler.js'
+import { validateQuestionForm, buildQuestionPayload } from '../util/questionForm.js'
+import { groupTechStacksByCategory } from '../util/techStackUtil.js'
 
 function QuestionCreatePage() {
   const navigate = useNavigate()
   const { state: appState } = useAppContext()
   const [state, dispatch] = useReducer(writeReducer, initialState)
 
+  // 소속 팀이 없으면 TEAM 공개 선택 자체를 막는다
+  const hasTeams = appState.teams.length > 0
+
   const set = field => e => dispatch({ type: WRITE.SET_FIELD, field, value: e.target.value })
+  // Monaco 등 event가 아닌 값을 직접 넘기는 컴포넌트용
+  const setValue = field => value => dispatch({ type: WRITE.SET_FIELD, field, value })
 
   function handleSubmit() {
-    // TODO: API 연동 - axiosInstance.post('/questions', { ...state })
-    navigate('/board')
+    // 클라이언트 유효성 검증 - 실패 시 API 호출 없이 즉시 에러 표시
+    const error = validateQuestionForm(state)
+    if (error) {
+      dispatch({ type: WRITE.SET_ERROR, payload: error })
+      return
+    }
+    dispatch({ type: WRITE.SET_ERROR, payload: '' })
+
+    requestHandler(() => createQuestion(buildQuestionPayload(state)), {
+      onSuccess: (data) => navigate(`/questions/${data.questionId}`),
+      onFail: (message) => dispatch({ type: WRITE.SET_ERROR, payload: message }),
+    })
   }
 
   return (
@@ -39,20 +56,11 @@ function QuestionCreatePage() {
 
         <div className="form-group">
           <label>오류 코드 <span className="form-label-hint">(선택)</span></label>
-          <select
-            className="select"
-            value={state.errorLanguage}
-            onChange={set('errorLanguage')}
-            style={{ marginBottom: 8 }}
-          >
-            <option value="">언어 선택</option>
-            {LANG_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
-          </select>
-          <textarea
-            className="textarea textarea-mono"
-            placeholder="오류 코드를 붙여넣어 주세요"
-            value={state.errorCode}
-            onChange={set('errorCode')}
+          <CodeEditor
+            language={state.errorLanguage}
+            code={state.errorCode}
+            onLanguageChange={setValue('errorLanguage')}
+            onCodeChange={setValue('errorCode')}
           />
         </div>
 
@@ -74,8 +82,12 @@ function QuestionCreatePage() {
                 onChange={() => dispatch({ type: WRITE.SET_VISIBILITY, payload: 'PUBLIC' })} />
               PUBLIC (전체 공개)
             </label>
-            <label className="radio-opt">
-              <input type="radio" name="visibility" checked={state.visibility === 'TEAM'}
+            {/* 소속 팀이 없으면 비활성화 */}
+            <label
+              className={`radio-opt ${!hasTeams ? 'radio-opt--disabled' : ''}`}
+              title={!hasTeams ? '소속된 팀이 없습니다' : undefined}
+            >
+              <input type="radio" name="visibility" disabled={!hasTeams} checked={state.visibility === 'TEAM'}
                 onChange={() => dispatch({ type: WRITE.SET_VISIBILITY, payload: 'TEAM' })} />
               TEAM (팀 공개)
             </label>
@@ -83,10 +95,10 @@ function QuestionCreatePage() {
               <select
                 className="select select--team"
                 value={state.selectedTeamId}
-                onChange={e => dispatch({ type: WRITE.SET_FIELD, field: 'selectedTeamId', value: e.target.value })}
+                onChange={set('selectedTeamId')}
               >
                 <option value="">팀 선택</option>
-                {appState.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {appState.teams.map(t => <option key={t.teamId} value={t.teamId}>{t.name}</option>)}
               </select>
             )}
           </div>
@@ -95,6 +107,7 @@ function QuestionCreatePage() {
         <div className="form-group">
           <label>기술 스택</label>
           <StackSelector
+            categories={groupTechStacksByCategory(appState.techStacks)}
             toggles={state.stackToggles}
             onToggle={key => dispatch({ type: WRITE.TOGGLE_STACK, payload: key })}
           />
@@ -124,6 +137,9 @@ function QuestionCreatePage() {
             )}
           </div>
         </div>
+
+        {/* 유효성 검증 실패 / 작성 API 실패 메시지 */}
+        {state.error && <div className="alert-banner">{state.error}</div>}
 
         <div className="form-actions">
           <button className="btn btn-ghost" onClick={() => navigate(-1)}>취소</button>
