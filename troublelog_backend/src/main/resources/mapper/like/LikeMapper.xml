@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.min.edu.like.repository.LikeMapper">
+	
+	<!-- 질문 접근 가능 여부 확인: PUBLIC이면 통과, TEAM이면 활성 팀원인지 확인 -->
+	<select id="existsAccessibleQuestion" resultType="int">
+		SELECT COUNT(*)
+        FROM questions q
+        WHERE q.id = #{questionId}
+          AND q.delflag = 'N'
+          AND (
+              q.visibility = 'PUBLIC'
+              OR EXISTS (
+                  SELECT 1 FROM team_members tm
+                  WHERE tm.team_id = q.team_id
+                    AND tm.user_id = #{userId}
+                    AND tm.delflag = 'N'
+              )
+          )
+	</select>
+	
+	
+	<!-- 답변 접근 가능 여부 확인: depth=0만 허용, 소속 질문 기준 PUBLIC/TEAM 판단 -->
+	<select id="existsAccessibleAnswer" resultType="int">
+		SELECT COUNT(*)
+        FROM  answers a
+        JOIN questions q ON q.id = a.question_id
+        WHERE a.id = #{answerId}
+          AND q.delflag = 'N'
+          AND a.depth = 0
+          AND a.delflag = 'N'
+          AND (
+              q.visibility = 'PUBLIC'
+              OR EXISTS (
+                  SELECT 1 FROM team_members tm
+                  WHERE tm.team_id = q.team_id
+                    AND tm.user_id = #{userId}
+                    AND tm.delflag = 'N'
+              )
+          )
+	</select>
+	
+	
+	<!-- 이미 좋아요가 존재하면 삽입하지 않는 조건부 INSERT -->
+	<insert id="insertIfNotExists">
+        INSERT INTO likes (user_id, target_id, target_type, created_at)
+        SELECT #{userId}, #{targetId}, #{targetType}, NOW()
+        FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM likes
+            WHERE user_id = #{userId}
+              AND target_id = #{targetId}
+              AND target_type = #{targetType}
+        )
+    </insert>
+    
+    
+    <!-- 질문 like_count를 likes 테이블 실제 개수로 다시 맞춘다 -->
+    <update id="updateQuestionCount">
+        UPDATE questions
+        SET like_count = (
+            SELECT COUNT(*) FROM likes
+            WHERE target_type = 'QUE' AND target_id = #{questionId}
+        )
+        WHERE id = #{questionId}
+    </update>
+    
+	
+	<!-- 답변 like_count를 likes 테이블 실제 개수로 다시 맞춘다 -->
+	<update id="updateAnswerCount">
+        UPDATE answers
+        SET like_count = (
+            SELECT COUNT(*) FROM likes
+            WHERE target_type = 'ANS' AND target_id = #{answerId}
+        )
+        WHERE id = #{answerId}
+    </update>
+    
+    
+    <select id="selectQuestionLikeCount" resultType="int">
+        SELECT like_count FROM questions WHERE id = #{questionId}
+    </select>
+    
+    
+    <select id="selectAnswerLikeCount" resultType="int">
+        SELECT like_count FROM answers WHERE id = #{answerId}
+    </select>
+    
+</mapper>
