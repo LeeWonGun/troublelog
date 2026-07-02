@@ -13,12 +13,18 @@ import com.min.edu.question.service.QuestionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 질문 게시글 API를 제공하는 Controller이다.
+ * 질문 게시글의 생성, 조회, 검색, 수정, 삭제 API를 제공하는 컨트롤러입니다.
  */
 @RestController
 @RequiredArgsConstructor
@@ -26,9 +32,6 @@ public class QuestionController {
 
     private final QuestionService questionService;
 
-    /**
-     * 비회원도 볼 수 있는 공개 질문 목록을 페이징 조회한다.
-     */
     @GetMapping("/api/questions/public")
     public ApiResponse<PageResponse<QuestionListResponse>> getPublicQuestions(
             @RequestParam(required = false) Integer page,
@@ -41,57 +44,23 @@ public class QuestionController {
         );
     }
 
-    /**
-     * 전체 공개 게시판 질문을 검색한다.
-     */
     @GetMapping("/api/questions/search")
     public ApiResponse<PageResponse<QuestionListResponse>> searchPublicQuestions(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) List<Long> techStackIds,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size
+            @ModelAttribute QuestionSearchCondition condition
     ) {
-        QuestionSearchCondition condition = new QuestionSearchCondition(
-                keyword,
-                status,
-                techStackIds,
-                sort,
-                page,
-                size
-        );
-
         return ApiResponse.success(
                 "공개 질문 검색 성공",
                 questionService.searchPublicQuestions(condition)
         );
     }
 
-    /**
-     * 팀 게시판 질문을 검색한다.
-     */
     @GetMapping("/api/teams/{teamId}/questions/search")
     public ApiResponse<PageResponse<QuestionListResponse>> searchTeamQuestions(
             Authentication authentication,
             @PathVariable Long teamId,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) List<Long> techStackIds,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size
+            @ModelAttribute QuestionSearchCondition condition
     ) {
         Long currentUserId = CurrentUser.id(authentication);
-
-        QuestionSearchCondition condition = new QuestionSearchCondition(
-                keyword,
-                status,
-                techStackIds,
-                sort,
-                page,
-                size
-        );
 
         return ApiResponse.success(
                 "팀 질문 검색 성공",
@@ -99,12 +68,6 @@ public class QuestionController {
         );
     }
 
-    /**
-     * 질문 상세 정보를 조회한다.
-     *
-     * PUBLIC 질문은 비회원도 조회 가능하고,
-     * TEAM 질문은 로그인한 팀원만 조회 가능하다.
-     */
     @GetMapping("/api/questions/{questionId}")
     public ApiResponse<QuestionDetailResponse> getQuestionDetail(
             Authentication authentication,
@@ -116,9 +79,6 @@ public class QuestionController {
         );
     }
 
-    /**
-     * 로그인 사용자가 PUBLIC 또는 TEAM 질문을 작성한다.
-     */
     @PostMapping("/api/questions")
     public ApiResponse<QuestionCreateResponse> createQuestion(
             Authentication authentication,
@@ -132,11 +92,6 @@ public class QuestionController {
         );
     }
 
-    /**
-     * 공개 질문을 인기순으로 조회한다.
-     *
-     * /api/questions/public?sort=POPULAR의 별칭 API이다.
-     */
     @GetMapping("/api/questions/popular")
     public ApiResponse<PageResponse<QuestionListResponse>> getPopularQuestions(
             @RequestParam(required = false) Integer page,
@@ -148,9 +103,6 @@ public class QuestionController {
         );
     }
 
-    /**
-     * 작성자 본인이 질문을 수정한다.
-     */
     @PutMapping("/api/questions/{questionId}")
     public ApiResponse<Void> updateQuestion(
             Authentication authentication,
@@ -164,9 +116,6 @@ public class QuestionController {
         return ApiResponse.success("질문 수정 성공");
     }
 
-    /**
-     * 작성자 본인이 질문을 삭제한다.
-     */
     @DeleteMapping("/api/questions/{questionId}")
     public ApiResponse<Void> deleteQuestion(
             Authentication authentication,
@@ -179,9 +128,6 @@ public class QuestionController {
         return ApiResponse.success("질문 삭제 성공");
     }
 
-    /**
-     * 로그인 사용자가 자신이 작성한 질문 목록을 조회한다.
-     */
     @GetMapping("/api/users/me/questions")
     public ApiResponse<PageResponse<QuestionListResponse>> getMyQuestions(
             Authentication authentication,
@@ -197,11 +143,6 @@ public class QuestionController {
         );
     }
 
-
-
-    /**
-     * 팀원이 해당 팀의 TEAM 질문 목록을 조회한다.
-     */
     @GetMapping("/api/teams/{teamId}/questions")
     public ApiResponse<PageResponse<QuestionListResponse>> getTeamQuestions(
             Authentication authentication,
