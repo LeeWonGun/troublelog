@@ -18,6 +18,9 @@ import java.util.Optional;
  * 단순 조회, 상세 조회, 저장/수정/삭제처럼 Entity 상태 변경이 필요한 작업은 JPA로 처리한다.
  * 조건이 많은 검색 쿼리는 MyBatis Mapper에서 처리한다.
  */
+/**
+ * 질문 Entity의 기본 조회, 목록 조회, 상태 변경 쿼리를 담당하는 JPA Repository입니다.
+ */
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     Page<Question> findByVisibilityAndDelflag(

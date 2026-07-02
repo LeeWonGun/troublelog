@@ -14,6 +14,9 @@ import java.time.LocalDateTime;
  * 회원/팀 Entity는 아직 인증 담당 PR과 충돌 가능성이 있으므로,
  * 현재 단계에서는 writerId, teamId를 Long 값으로만 관리한다.
  */
+/**
+ * 질문 게시글의 본문, 상태, 공개 범위, 집계 정보를 관리하는 Entity입니다.
+ */
 @Entity
 @Table(name = "questions")
 @Getter
@@ -81,13 +84,6 @@ public class Question {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    /**
-     * 질문 상세 조회 시 조회수를 1 증가시킨다.
-     */
-    public void increaseViewCount() {
-        this.viewCount++;
-    }
 
     public Question(
             Long writerId,

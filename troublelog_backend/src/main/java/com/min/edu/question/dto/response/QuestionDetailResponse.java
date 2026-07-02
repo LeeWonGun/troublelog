@@ -10,6 +10,9 @@ import java.util.List;
 /**
  * 질문 상세 화면의 질문 본문 영역을 표현하는 응답 DTO이다.
  */
+/**
+ * 질문 상세 화면에 필요한 본문, 작성자, 팀, 기술 스택 정보를 담는 응답 DTO입니다.
+ */
 public record QuestionDetailResponse(
         Long questionId,
         String title,

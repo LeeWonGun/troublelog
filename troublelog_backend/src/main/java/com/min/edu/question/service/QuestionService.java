@@ -11,69 +11,40 @@ import com.min.edu.question.dto.response.QuestionDetailResponse;
 import com.min.edu.question.dto.response.QuestionListResponse;
 import com.min.edu.question.dto.response.QuestionSearchRow;
 import com.min.edu.question.entity.Question;
-import com.min.edu.question.entity.QuestionStatus;
-import com.min.edu.question.entity.QuestionTechStack;
 import com.min.edu.question.entity.QuestionVisibility;
 import com.min.edu.question.mapper.QuestionSearchMapper;
 import com.min.edu.question.repository.QuestionRepository;
-import com.min.edu.question.repository.QuestionTechStackRepository;
+import com.min.edu.question.service.condition.QuestionListCondition;
+import com.min.edu.question.service.condition.QuestionSearchCriteria;
 import com.min.edu.question.util.QuestionContentFormatter;
 import com.min.edu.question.util.QuestionContentParts;
-import com.min.edu.team.domain.Team;
 import com.min.edu.team.repository.TeamMemberRepository;
-import com.min.edu.team.repository.TeamRepository;
-import com.min.edu.techstack.dto.response.TechStackResponse;
-import com.min.edu.techstack.repository.TechStackRepository;
 import com.min.edu.user.domain.User;
 import com.min.edu.user.repository.UserRepository;
-import com.min.edu.user.service.UserService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * 질문 게시글 관련 비즈니스 로직을 담당하는 Service이다.
- *
- * 단순 Entity 조회/저장/수정/삭제는 JPA Repository를 사용하고,
- * 조건이 많은 검색 조회는 MyBatis Mapper를 사용한다.
+ * 질문 게시글의 비즈니스 흐름과 권한 검증을 담당하는 서비스입니다.
  */
 @Service
 @RequiredArgsConstructor
 public class QuestionService {
 
-    private static final QuestionVisibility VISIBILITY_PUBLIC = QuestionVisibility.PUBLIC;
-    private static final QuestionVisibility VISIBILITY_TEAM = QuestionVisibility.TEAM;
     private static final String DELFLAG_NORMAL = "N";
 
-    private static final String STATUS_UNSOLVED = "UNSOLVED";
-    private static final String STATUS_SOLVED = "SOLVED";
-
-    private static final String SORT_LATEST = "LATEST";
-    private static final String SORT_POPULAR = "POPULAR";
-
-    private static final int DEFAULT_PAGE = 0;
-    private static final int DEFAULT_SIZE = 10;
-    private static final int MAX_SIZE = 50;
-
     private final QuestionRepository questionRepository;
-    private final QuestionTechStackRepository questionTechStackRepository;
     private final QuestionSearchMapper questionSearchMapper;
     private final TeamMemberRepository teamMemberRepository;
-    private final TeamRepository teamRepository;
-    private final TechStackRepository techStackRepository;
     private final UserRepository userRepository;
-    private final UserService userService;
+    private final QuestionTechStackService questionTechStackService;
+    private final QuestionResponseAssembler questionResponseAssembler;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -84,47 +55,37 @@ public class QuestionService {
             Integer size,
             String sort
     ) {
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size);
-        String normalizedSort = normalizeSort(sort);
-
-        Pageable pageable = createPageable(normalizedPage, normalizedSize, normalizedSort);
-
+        QuestionListCondition condition = QuestionListCondition.from(page, size, sort);
         Page<Question> questionPage;
 
-        if (STATUS_SOLVED.equals(normalizedSort) || STATUS_UNSOLVED.equals(normalizedSort)) {
+        if (condition.status() != null) {
             questionPage = questionRepository.findByVisibilityAndDelflagAndStatus(
-                    VISIBILITY_PUBLIC,
+                    QuestionVisibility.PUBLIC,
                     DELFLAG_NORMAL,
-                    QuestionStatus.valueOf(normalizedSort),
-                    pageable
+                    condition.status(),
+                    condition.pageable()
             );
         } else {
             questionPage = questionRepository.findByVisibilityAndDelflag(
-                    VISIBILITY_PUBLIC,
+                    QuestionVisibility.PUBLIC,
                     DELFLAG_NORMAL,
-                    pageable
+                    condition.pageable()
             );
         }
 
-        return toPageResponse(questionPage, normalizedPage, normalizedSize);
+        return questionResponseAssembler.toPageResponse(questionPage, condition.page(), condition.size());
     }
 
     @Transactional
     public QuestionDetailResponse getQuestionDetail(Long questionId, Long currentUserId) {
         Question question = getQuestion(questionId);
-
         validateQuestionAccess(question, currentUserId);
 
         questionRepository.increaseViewCount(question.getId());
         entityManager.refresh(question);
 
         QuestionContentParts contentParts = QuestionContentFormatter.parse(question.getContent());
-        List<TechStackResponse> techStacks = getTechStacks(question.getId());
-        String writerNickname = getWriterNickname(question.getWriterId());
-        String teamName = getTeamName(question.getTeamId());
-
-        return QuestionDetailResponse.from(question, contentParts, techStacks, writerNickname, teamName);
+        return questionResponseAssembler.toDetailResponse(question, contentParts);
     }
 
     @Transactional(readOnly = true)
@@ -144,7 +105,7 @@ public class QuestionService {
 
     @Transactional
     public QuestionCreateResponse createQuestion(Long currentUserId, QuestionCreateRequest request) {
-        userService.getActiveUser(currentUserId);
+        validateActiveUser(currentUserId);
 
         QuestionVisibility visibility = normalizeVisibility(request.visibility());
         Long teamId = resolveTeamIdForWrite(visibility, request.teamId(), currentUserId);
@@ -170,7 +131,7 @@ public class QuestionService {
         );
 
         Question savedQuestion = questionRepository.save(question);
-        saveTechStacks(savedQuestion.getId(), request.techStackIds());
+        questionTechStackService.saveTechStacks(savedQuestion.getId(), request.techStackIds());
 
         return new QuestionCreateResponse(savedQuestion.getId());
     }
@@ -182,38 +143,32 @@ public class QuestionService {
             Integer size,
             String sort
     ) {
-        userService.getActiveUser(currentUserId);
+        validateActiveUser(currentUserId);
 
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size);
-        String normalizedSort = normalizeSort(sort);
-
-        Pageable pageable = createPageable(normalizedPage, normalizedSize, normalizedSort);
-
+        QuestionListCondition condition = QuestionListCondition.from(page, size, sort);
         Page<Question> questionPage;
 
-        if (STATUS_SOLVED.equals(normalizedSort) || STATUS_UNSOLVED.equals(normalizedSort)) {
+        if (condition.status() != null) {
             questionPage = questionRepository.findByWriterIdAndDelflagAndStatus(
                     currentUserId,
                     DELFLAG_NORMAL,
-                    QuestionStatus.valueOf(normalizedSort),
-                    pageable
+                    condition.status(),
+                    condition.pageable()
             );
         } else {
             questionPage = questionRepository.findByWriterIdAndDelflag(
                     currentUserId,
                     DELFLAG_NORMAL,
-                    pageable
+                    condition.pageable()
             );
         }
 
-        return toPageResponse(questionPage, normalizedPage, normalizedSize);
+        return questionResponseAssembler.toPageResponse(questionPage, condition.page(), condition.size());
     }
 
     @Transactional
     public void updateQuestion(Long currentUserId, Long questionId, QuestionUpdateRequest request) {
         Question question = getQuestion(questionId);
-
         validateQuestionWriter(question, currentUserId);
 
         QuestionVisibility visibility = normalizeVisibility(request.visibility());
@@ -238,16 +193,13 @@ public class QuestionService {
                 visibility
         );
 
-        questionTechStackRepository.deleteByQuestionId(question.getId());
-        saveTechStacks(question.getId(), request.techStackIds());
+        questionTechStackService.replaceTechStacks(question.getId(), request.techStackIds());
     }
 
     @Transactional
     public void deleteQuestion(Long currentUserId, Long questionId) {
         Question question = getQuestion(questionId);
-
         validateQuestionWriter(question, currentUserId);
-
         question.delete();
     }
 
@@ -261,90 +213,59 @@ public class QuestionService {
     ) {
         validateTeamMember(teamId, currentUserId);
 
-        int normalizedPage = normalizePage(page);
-        int normalizedSize = normalizeSize(size);
-        String normalizedSort = normalizeSort(sort);
-
-        Pageable pageable = createPageable(normalizedPage, normalizedSize, normalizedSort);
-
+        QuestionListCondition condition = QuestionListCondition.from(page, size, sort);
         Page<Question> questionPage;
 
-        if (STATUS_SOLVED.equals(normalizedSort) || STATUS_UNSOLVED.equals(normalizedSort)) {
+        if (condition.status() != null) {
             questionPage = questionRepository.findByTeamIdAndVisibilityAndDelflagAndStatus(
                     teamId,
-                    VISIBILITY_TEAM,
+                    QuestionVisibility.TEAM,
                     DELFLAG_NORMAL,
-                    QuestionStatus.valueOf(normalizedSort),
-                    pageable
+                    condition.status(),
+                    condition.pageable()
             );
         } else {
             questionPage = questionRepository.findByTeamIdAndVisibilityAndDelflag(
                     teamId,
-                    VISIBILITY_TEAM,
+                    QuestionVisibility.TEAM,
                     DELFLAG_NORMAL,
-                    pageable
+                    condition.pageable()
             );
         }
 
-        return toPageResponse(questionPage, normalizedPage, normalizedSize);
+        return questionResponseAssembler.toPageResponse(questionPage, condition.page(), condition.size());
     }
 
     private PageResponse<QuestionListResponse> searchQuestions(
             Long teamId,
             QuestionSearchCondition condition
     ) {
-        int page = normalizePage(condition.page());
-        int size = normalizeSize(condition.size());
-        String keyword = normalizeKeyword(condition.keyword());
-
-        SearchOption searchOption = resolveSearchOption(condition.sort(), condition.status());
-        List<Long> techStackIds = normalizeTechStackIds(condition.techStackIds());
-
-        int offset = page * size;
+        QuestionSearchCriteria criteria = QuestionSearchCriteria.from(condition);
 
         List<QuestionSearchRow> rows = questionSearchMapper.searchQuestions(
                 teamId,
-                keyword,
-                searchOption.status(),
-                techStackIds,
-                searchOption.sort(),
-                offset,
-                size
+                criteria.keyword(),
+                criteria.statusName(),
+                criteria.techStackIds(),
+                criteria.sortName(),
+                criteria.offset(),
+                criteria.size()
         );
 
         long totalElements = questionSearchMapper.countSearchQuestions(
                 teamId,
-                keyword,
-                searchOption.status(),
-                techStackIds
+                criteria.keyword(),
+                criteria.statusName(),
+                criteria.techStackIds()
         );
 
-        List<QuestionListResponse> content = toQuestionListResponsesFromSearchRows(rows);
-
-        return PageResponse.of(content, page, size, totalElements);
-    }
-
-    private PageResponse<QuestionListResponse> toPageResponse(
-            Page<Question> questionPage,
-            int page,
-            int size
-    ) {
-        return new PageResponse<>(
-                toQuestionListResponses(questionPage.getContent()),
-                page,
-                size,
-                questionPage.getTotalElements(),
-                questionPage.getTotalPages(),
-                questionPage.hasNext()
-        );
+        List<QuestionListResponse> content = questionResponseAssembler.toQuestionListResponsesFromSearchRows(rows);
+        return PageResponse.of(content, criteria.page(), criteria.size(), totalElements);
     }
 
     private Question getQuestion(Long questionId) {
         return questionRepository.findByIdAndDelflag(questionId, DELFLAG_NORMAL)
-                .orElseThrow(() -> new BusinessException(
-                        "질문을 찾을 수 없습니다.",
-                        ErrorCode.QUESTION_NOT_FOUND
-                ));
+                .orElseThrow(() -> new BusinessException("질문을 찾을 수 없습니다.", ErrorCode.QUESTION_NOT_FOUND));
     }
 
     private void validateQuestionAccess(Question question, Long currentUserId) {
@@ -365,15 +286,24 @@ public class QuestionService {
     }
 
     private void validateQuestionWriter(Question question, Long currentUserId) {
-        userService.getActiveUser(currentUserId);
+        validateActiveUser(currentUserId);
 
         if (!question.isWriter(currentUserId)) {
             throw new BusinessException("질문 작성자만 수정 또는 삭제할 수 있습니다.", ErrorCode.FORBIDDEN);
         }
     }
 
+    private void validateActiveUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException("사용자를 찾을 수 없습니다.", ErrorCode.USER_NOT_FOUND));
+
+        if (user.isDeleted()) {
+            throw new BusinessException("사용자를 찾을 수 없습니다.", ErrorCode.USER_NOT_FOUND);
+        }
+    }
+
     private Long resolveTeamIdForWrite(QuestionVisibility visibility, Long teamId, Long currentUserId) {
-        if (VISIBILITY_PUBLIC.equals(visibility)) {
+        if (QuestionVisibility.PUBLIC.equals(visibility)) {
             return null;
         }
 
@@ -397,241 +327,19 @@ public class QuestionService {
         }
     }
 
-    private void saveTechStacks(Long questionId, List<Long> techStackIds) {
-        List<Long> normalizedTechStackIds = normalizeTechStackIds(techStackIds);
-
-        if (normalizedTechStackIds.isEmpty()) {
-            return;
-        }
-
-        validateActiveTechStacks(normalizedTechStackIds);
-
-        List<QuestionTechStack> questionTechStacks = normalizedTechStackIds.stream()
-                .map(techStackId -> new QuestionTechStack(questionId, techStackId))
-                .toList();
-
-        questionTechStackRepository.saveAll(questionTechStacks);
-    }
-
-    private List<QuestionListResponse> toQuestionListResponses(List<Question> questions) {
-        if (questions.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> questionIds = questions.stream()
-                .map(Question::getId)
-                .toList();
-
-        Map<Long, List<TechStackResponse>> techStackMap = getTechStackMap(questionIds);
-        Map<Long, String> writerNicknameMap = getWriterNicknameMap(questions);
-
-        return questions.stream()
-                .map(question -> QuestionListResponse.from(
-                        question,
-                        writerNicknameMap.get(question.getWriterId()),
-                        techStackMap.getOrDefault(question.getId(), Collections.emptyList())
-                ))
-                .toList();
-    }
-
-    private List<QuestionListResponse> toQuestionListResponsesFromSearchRows(List<QuestionSearchRow> rows) {
-        if (rows.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Long> questionIds = rows.stream()
-                .map(QuestionSearchRow::questionId)
-                .toList();
-
-        Map<Long, List<TechStackResponse>> techStackMap = getTechStackMap(questionIds);
-
-        return rows.stream()
-                .map(row -> QuestionListResponse.fromSearchRow(
-                        row,
-                        techStackMap.getOrDefault(row.questionId(), Collections.emptyList())
-                ))
-                .toList();
-    }
-
-    private Map<Long, List<TechStackResponse>> getTechStackMap(List<Long> questionIds) {
-        if (questionIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        return questionTechStackRepository.findByQuestionIdIn(questionIds)
-                .stream()
-                .collect(Collectors.groupingBy(
-                        QuestionTechStack::getQuestionId,
-                        Collectors.mapping(
-                                questionTechStack -> TechStackResponse.from(questionTechStack.getTechStack()),
-                                Collectors.toList()
-                        )
-                ));
-    }
-
-    private Map<Long, String> getWriterNicknameMap(List<Question> questions) {
-        List<Long> writerIds = questions.stream()
-                .map(Question::getWriterId)
-                .distinct()
-                .toList();
-
-        if (writerIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        return userRepository.findAllById(writerIds)
-                .stream()
-                .filter(user -> !user.isDeleted())
-                .collect(Collectors.toMap(User::getId, User::getNickname));
-    }
-
-    private String getWriterNickname(Long writerId) {
-        if (writerId == null) {
-            return null;
-        }
-
-        return userRepository.findById(writerId)
-                .filter(user -> !user.isDeleted())
-                .map(User::getNickname)
-                .orElse(null);
-    }
-
-    private String getTeamName(Long teamId) {
-        if (teamId == null) {
-            return null;
-        }
-
-        return teamRepository.findById(teamId)
-                .filter(team -> !team.isDeleted())
-                .map(Team::getName)
-                .orElse(null);
-    }
-
-    private List<TechStackResponse> getTechStacks(Long questionId) {
-        return questionTechStackRepository.findByQuestionId(questionId)
-                .stream()
-                .map(questionTechStack -> TechStackResponse.from(questionTechStack.getTechStack()))
-                .toList();
-    }
-
-    private void validateActiveTechStacks(List<Long> techStackIds) {
-        long activeCount = techStackRepository.countByIdInAndActiveTrue(techStackIds);
-        if (activeCount != techStackIds.size()) {
-            throw new BusinessException("Invalid tech stack id.", ErrorCode.INVALID_REQUEST);
-        }
-    }
-
-    private Pageable createPageable(int page, int size, String sort) {
-        if (SORT_POPULAR.equals(sort)) {
-            return PageRequest.of(
-                    page,
-                    size,
-                    Sort.by(Sort.Direction.DESC, "likeCount")
-                            .and(Sort.by(Sort.Direction.DESC, "createdAt"))
-            );
-        }
-
-        return PageRequest.of(
-                page,
-                size,
-                Sort.by(Sort.Direction.DESC, "createdAt")
-        );
-    }
-
-    private int normalizePage(Integer page) {
-        if (page == null) {
-            return DEFAULT_PAGE;
-        }
-
-        if (page < 0) {
-            throw new BusinessException("페이지 번호는 0 이상이어야 합니다.", ErrorCode.INVALID_REQUEST);
-        }
-
-        return page;
-    }
-
-    private int normalizeSize(Integer size) {
-        if (size == null) {
-            return DEFAULT_SIZE;
-        }
-
-        if (size <= 0) {
-            throw new BusinessException("페이지 크기는 1 이상이어야 합니다.", ErrorCode.INVALID_REQUEST);
-        }
-
-        return Math.min(size, MAX_SIZE);
-    }
-
-    private String normalizeKeyword(String keyword) {
-        return keyword == null ? "" : keyword.trim();
-    }
-
     private QuestionVisibility normalizeVisibility(String visibility) {
         if (visibility == null || visibility.isBlank()) {
-            return VISIBILITY_PUBLIC;
+            return QuestionVisibility.PUBLIC;
         }
 
         String normalizedVisibility = visibility.trim().toUpperCase();
 
-        if (!VISIBILITY_PUBLIC.name().equals(normalizedVisibility) && !VISIBILITY_TEAM.name().equals(normalizedVisibility)) {
+        if (!QuestionVisibility.PUBLIC.name().equals(normalizedVisibility)
+                && !QuestionVisibility.TEAM.name().equals(normalizedVisibility)) {
             throw new BusinessException("질문 공개 범위가 올바르지 않습니다.", ErrorCode.INVALID_REQUEST);
         }
 
         return QuestionVisibility.valueOf(normalizedVisibility);
-    }
-
-    private String normalizeSort(String sort) {
-        if (sort == null || sort.isBlank()) {
-            return SORT_LATEST;
-        }
-
-        String normalizedSort = sort.trim().toUpperCase();
-
-        if (!SORT_LATEST.equals(normalizedSort)
-                && !SORT_POPULAR.equals(normalizedSort)
-                && !STATUS_SOLVED.equals(normalizedSort)
-                && !STATUS_UNSOLVED.equals(normalizedSort)) {
-            throw new BusinessException("정렬 조건이 올바르지 않습니다.", ErrorCode.INVALID_REQUEST);
-        }
-
-        return normalizedSort;
-    }
-
-    private SearchOption resolveSearchOption(String sort, String status) {
-        String normalizedSort = normalizeSort(sort);
-        String normalizedStatus = normalizeStatus(status);
-
-        if ((STATUS_SOLVED.equals(normalizedSort) || STATUS_UNSOLVED.equals(normalizedSort))
-                && normalizedStatus.isBlank()) {
-            return new SearchOption(SORT_LATEST, normalizedSort);
-        }
-
-        return new SearchOption(normalizedSort, normalizedStatus);
-    }
-
-    private String normalizeStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return "";
-        }
-
-        String normalizedStatus = status.trim().toUpperCase();
-
-        if (!STATUS_UNSOLVED.equals(normalizedStatus) && !STATUS_SOLVED.equals(normalizedStatus)) {
-            throw new BusinessException("질문 상태 검색 조건이 올바르지 않습니다.", ErrorCode.INVALID_REQUEST);
-        }
-
-        return normalizedStatus;
-    }
-
-    private List<Long> normalizeTechStackIds(List<Long> techStackIds) {
-        if (techStackIds == null) {
-            return Collections.emptyList();
-        }
-
-        return techStackIds.stream()
-                .filter(techStackId -> techStackId != null && techStackId > 0)
-                .distinct()
-                .toList();
     }
 
     private void validateRequiredText(String value, String message) {
@@ -646,11 +354,5 @@ public class QuestionService {
         }
 
         return value.trim();
-    }
-
-    private record SearchOption(
-            String sort,
-            String status
-    ) {
     }
 }

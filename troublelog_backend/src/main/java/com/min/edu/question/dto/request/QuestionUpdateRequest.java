@@ -7,34 +7,34 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
+/**
+ * 질문 수정 API에서 클라이언트가 전달하는 요청 DTO입니다.
+ */
 public record QuestionUpdateRequest(
-        @NotBlank(message = "Question title is required.")
-        @Size(max = 200, message = "Question title must be 200 characters or less.")
+        @NotBlank(message = "질문 제목을 입력해 주세요.")
+        @Size(max = 200, message = "질문 제목은 200자 이하로 입력해 주세요.")
         String title,
 
-        // 상황 설명만 받는다. 코드는 codeLanguage, code와 조합해 questions.content에 저장한다.
-        @NotBlank(message = "Question content is required.")
+        // 상황 설명만 받고, codeLanguage/code는 QuestionContentFormatter에서 content에 합쳐 저장합니다.
+        @NotBlank(message = "질문 내용을 입력해 주세요.")
         String content,
 
-        // 코드 입력이 있을 때만 사용한다.
-        @Size(max = 50, message = "Code language must be 50 characters or less.")
+        // 코드 입력이 있을 때만 사용합니다.
+        @Size(max = 50, message = "코드 언어는 50자 이하로 입력해 주세요.")
         String codeLanguage,
 
-        // 선택 입력값이다. 값이 없으면 content만 저장한다.
+        // 선택 입력값입니다. 값이 없으면 content만 저장합니다.
         String code,
         String errorMessage,
         String environment,
         String tried,
 
-        // PUBLIC 또는 TEAM
-        @Pattern(regexp = "(?i)PUBLIC|TEAM", message = "Visibility must be PUBLIC or TEAM.")
+        @Pattern(regexp = "(?i)PUBLIC|TEAM", message = "공개 범위는 PUBLIC 또는 TEAM만 가능합니다.")
         String visibility,
 
-        // TEAM 질문으로 수정할 때만 필요하다.
-        @Positive(message = "Team id must be positive.")
+        @Positive(message = "팀 ID는 양수여야 합니다.")
         Long teamId,
 
-        // 수정 후 질문에 연결할 기술 스택 ID 목록이다.
-        List<@Positive(message = "Tech stack id must be positive.") Long> techStackIds
+        List<@Positive(message = "기술 스택 ID는 양수여야 합니다.") Long> techStackIds
 ) {
 }
