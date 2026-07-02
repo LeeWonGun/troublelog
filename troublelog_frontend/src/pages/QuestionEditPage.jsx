@@ -1,50 +1,80 @@
-import { useReducer } from 'react'
+import { useEffect, useReducer } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAppContext } from '../context/AppContext.jsx'
 import { WRITE } from '../constants/actionTypes.js'
 import StackSelector from '../components/common/StackSelector.jsx'
+import CodeEditor from '../components/common/CodeEditor.jsx'
 import writeReducer, { initialState } from '../reducers/writeReducer.js'
+import { getQuestion, updateQuestion } from '../api/questionApi.js'
+import { requestHandler } from '../util/requestHandler.js'
+import { validateQuestionForm, buildQuestionPayload, buildFormStateFromDetail } from '../util/questionForm.js'
+import { groupTechStacksByCategory } from '../util/techStackUtil.js'
 
-// 오류 코드 언어 선택 옵션 (QuestionCreatePage와 동일)
-const LANG_OPTIONS = ['Java', 'Python', 'JavaScript', 'TypeScript', 'Kotlin', 'Go', 'SQL', '기타']
-
-/**
- * P-FE-BD-20 게시글 수정 페이지
- * QuestionCreatePage와 동일한 폼 구조에 기존 데이터를 pre-fill
- * - 진입: QuestionDetailPage의 "수정" 버튼 클릭 (작성자 본인만 접근 가능)
- * - 완료: /questions/:id 상세 페이지로 이동
- */
-
-// 목업용 임시 데이터 — API 연동 시 useEffect + axiosInstance.get('/questions/:id')로 대체
-const MOCK_EXISTING_POST = {
-  title: '[Spring] 마이페이지 진입 시 500 Internal Server Error',
-  situation: '로그인 직후 마이페이지에 진입하면 500 에러가 발생합니다. 로컬에서는 정상 동작하는데 배포 환경에서만 재현돼요.',
-  errorLanguage: 'Java',
-  errorCode: 'user.getProfile(); // NullPointerException 발생',
-  errorMessage: 'Exception in thread "main" java.lang.NullPointerException:\n  Cannot invoke "User.getUser()" because "user" is null',
-  triedMethods: '구글링 · 세션 설정값 변경 · 필터 순서 변경 시도',
-  visibility: 'PUBLIC',
-  selectedTeamId: '',
-  stackToggles: { 'language-Java': true, framework_Spring: true },
-  images: ['existing_image_1'],
-}
 
 function QuestionEditPage() {
   const navigate = useNavigate()
   const { id } = useParams()
   const { state: appState } = useAppContext()
 
-  // 기존 게시글 데이터로 초기 상태 pre-fill
-  const [state, dispatch] = useReducer(writeReducer, {
-    ...initialState,
-    ...MOCK_EXISTING_POST,
-  })
+  // 수정 페이지는 기존 게시글을 불러올 때까지 loading 상태로 시작
+  const [state, dispatch] = useReducer(writeReducer, { ...initialState, loading: true })
+
+  // 소속 팀이 없으면 TEAM 공개 선택 자체를 막는다 (작성 페이지와 동일 정책)
+  const hasTeams = appState.teams.length > 0
 
   const set = field => e => dispatch({ type: WRITE.SET_FIELD, field, value: e.target.value })
+  // Monaco 등 event가 아닌 값을 직접 넘기는 컴포넌트용
+  const setValue = field => value => dispatch({ type: WRITE.SET_FIELD, field, value })
+
+  // 기존 게시글 조회 -> 폼 상태 pre-fill
+  useEffect(() => {
+    let ignore = false // 늦게 도착한 응답이 최신 입력값을 덮어쓰지 않도록 막는 가드
+
+    requestHandler(() => getQuestion(id), {
+      isCancelled: () => ignore,
+      onSuccess: (data) => dispatch({ type: WRITE.PREFILL, payload: buildFormStateFromDetail(data) }),
+      onFail: (message) => dispatch({ type: WRITE.LOAD_FAILED, payload: message }),
+      fallbackMessage: '게시글을 불러오지 못했습니다.',
+    })
+
+    return () => { ignore = true }
+  }, [id])
 
   function handleSubmit() {
-    // TODO: API 연동 - axiosInstance.put('/questions/:id', { ...state })
-    navigate(`/questions/${id}`)
+    // 클라이언트 유효성 검증 - 실패 시 API 호출 없이 즉시 에러 표시
+    const error = validateQuestionForm(state)
+    if (error) {
+      dispatch({ type: WRITE.SET_ERROR, payload: error })
+      return
+    }
+    dispatch({ type: WRITE.SET_ERROR, payload: '' })
+
+    // 작성자 본인 여부는 서버가 재검증한다 (본인이 아니면 실패 응답)
+    requestHandler(() => updateQuestion(id, buildQuestionPayload(state)), {
+      onSuccess: () => navigate(`/questions/${id}`),
+      onFail: (message) => dispatch({ type: WRITE.SET_ERROR, payload: message }),
+      fallbackMessage: '게시글 수정에 실패했습니다.',
+    })
+  }
+
+  // 기존 게시글 로딩 중 / 조회 실패 화면
+  if (state.loading) {
+    return (
+      <div className="main">
+        <div className="panel" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>불러오는 중...</div>
+      </div>
+    )
+  }
+
+  if (state.loadError) {
+    return (
+      <div className="main">
+        <button className="text-link text-link--back" onClick={() => navigate('/board')}>
+          &#8592; 게시판 목록
+        </button>
+        <div className="panel">{state.loadError}</div>
+      </div>
+    )
   }
 
   return (
@@ -68,20 +98,11 @@ function QuestionEditPage() {
         {/* 오류 코드 섹션: 언어 선택 + 코드 입력 */}
         <div className="form-group">
           <label>오류 코드 <span className="form-label-hint">(선택)</span></label>
-          <select
-            className="select"
-            value={state.errorLanguage}
-            onChange={set('errorLanguage')}
-            style={{ marginBottom: 8 }}
-          >
-            <option value="">언어 선택</option>
-            {LANG_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
-          </select>
-          <textarea
-            className="textarea textarea-mono"
-            placeholder="오류 코드를 붙여넣어 주세요"
-            value={state.errorCode}
-            onChange={set('errorCode')}
+          <CodeEditor
+            language={state.errorLanguage}
+            code={state.errorCode}
+            onLanguageChange={setValue('errorLanguage')}
+            onCodeChange={setValue('errorCode')}
           />
         </div>
 
@@ -103,8 +124,12 @@ function QuestionEditPage() {
                 onChange={() => dispatch({ type: WRITE.SET_VISIBILITY, payload: 'PUBLIC' })} />
               PUBLIC (전체 공개)
             </label>
-            <label className="radio-opt">
-              <input type="radio" name="visibility" checked={state.visibility === 'TEAM'}
+            {/* 소속 팀이 없으면 비활성화 */}
+            <label
+              className={`radio-opt ${!hasTeams ? 'radio-opt--disabled' : ''}`}
+              title={!hasTeams ? '소속된 팀이 없습니다' : undefined}
+            >
+              <input type="radio" name="visibility" disabled={!hasTeams} checked={state.visibility === 'TEAM'}
                 onChange={() => dispatch({ type: WRITE.SET_VISIBILITY, payload: 'TEAM' })} />
               TEAM (팀 공개)
             </label>
@@ -112,10 +137,10 @@ function QuestionEditPage() {
               <select
                 className="select select--team"
                 value={state.selectedTeamId}
-                onChange={e => dispatch({ type: WRITE.SET_FIELD, field: 'selectedTeamId', value: e.target.value })}
+                onChange={set('selectedTeamId')}
               >
                 <option value="">팀 선택</option>
-                {appState.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                {appState.teams.map(t => <option key={t.teamId} value={t.teamId}>{t.name}</option>)}
               </select>
             )}
           </div>
@@ -123,8 +148,9 @@ function QuestionEditPage() {
 
         <div className="form-group">
           <label>기술 스택</label>
-          {/* pre-fill된 스택이 chip-toggle.on 상태로 표시됨 */}
+          
           <StackSelector
+            categories={groupTechStacksByCategory(appState.techStacks)}
             toggles={state.stackToggles}
             onToggle={key => dispatch({ type: WRITE.TOGGLE_STACK, payload: key })}
           />
@@ -132,15 +158,15 @@ function QuestionEditPage() {
 
         <div className="form-group">
           <label>이미지 첨부 <span className="form-label-hint">(최대 4개)</span></label>
-          {/* 기존 이미지 + 추가 박스를 attach-row로 나열 */}
+          {/* TODO: fileApi 연동 전까지 목업 유지 (QuestionDetailResponse에 이미지 필드 없음) */}
           <div className="attach-row">
             {state.images.map((img, i) => (
               <div key={i} className="attach-box" style={{ position: 'relative' }}>
-                🖼 이미지 {i + 1}
+                {'🖼'} 이미지 {i + 1}
                 <button
                   style={{ position: 'absolute', top: 4, right: 6, background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                   onClick={() => dispatch({ type: WRITE.REMOVE_IMAGE, payload: i })}
-                >✕</button>
+                >&#x2715;</button>
               </div>
             ))}
             {state.images.length < 4 && (
@@ -155,6 +181,8 @@ function QuestionEditPage() {
           </div>
         </div>
 
+        {state.error && <div className="alert-banner">{state.error}</div>}
+
         <div className="form-actions">
           <button className="btn btn-ghost" onClick={() => navigate(`/questions/${id}`)}>취소</button>
           <button className="btn btn-primary" onClick={handleSubmit}>수정</button>
@@ -165,11 +193,3 @@ function QuestionEditPage() {
 }
 
 export default QuestionEditPage
-
-/*
- * [고려한 예외 처리 및 보안 사항]
- * - 진입 시 작성자 본인 여부를 서버에서 재검증 필요 (클라이언트 체크만으로는 불충분)
- * - 이미지 최대 4개 제한 — ADD_IMAGE 액션에서 guard 처리됨
- * - MOCK_EXISTING_POST는 임시 데이터, API 연동 시 useEffect + GET 요청으로 대체
- * - 수정 완료 후 상세 페이지로 이동 (id 기반 navigate)
- */

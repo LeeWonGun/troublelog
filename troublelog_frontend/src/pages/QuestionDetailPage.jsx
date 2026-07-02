@@ -4,9 +4,11 @@ import { QDETAIL } from '../constants/actionTypes.js'
 import { useAppContext } from '../context/AppContext.jsx'
 import StatusChip from '../components/common/StatusChip.jsx'
 import TagRow from '../components/common/TagRow.jsx'
+import ModalOverlay from '../components/common/ModalOverlay.jsx'
 import questionDetailReducer, { initialState } from '../reducers/questionDetailReducer.js'
 import { MOCK_ANSWERS } from '../constants/mockData.js'
-import { getQuestion } from '../api/questionApi.js'
+import { getQuestion, deleteQuestion } from '../api/questionApi.js'
+import { likeQuestion, unlikeQuestion } from '../api/likeApi.js'
 import { requestHandler } from '../util/requestHandler.js'
 import { formatDateTime } from '../util/dateUtil.js'
 import MarkdownHighlighter, { normalizeCodeLanguage } from '../components/common/MarkdownHighlighter.jsx'
@@ -48,9 +50,6 @@ function CommentBlock({ answerId, commentInput, onInputChange }) {
   )
 }
 
-// 목업 목적으로 임시 하드코딩된 작성자 정보 (API 연동 시 서버 응답으로 대체)
-const MOCK_AUTHOR_ID = 'user_001'
-
 function QuestionDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -71,6 +70,35 @@ function QuestionDetailPage() {
     return () => { ignore = true }
   }, [id])
 
+  const closeDeleteConfirm = () => dispatch({ type: QDETAIL.SET_DELETE_CONFIRM, payload: false })
+
+  // 게시글 삭제 - 작성자 본인 여부는 서버가 재검증한다 (실패 시 전역 에러 모달 표시)
+  function handleDelete() {
+    requestHandler(() => deleteQuestion(id), {
+      onSuccess: () => navigate('/board'),
+      onFail: closeDeleteConfirm,
+      fallbackMessage: '게시글 삭제에 실패했습니다.',
+      showGlobalError: true,
+    })
+  }
+
+  // 게시글 좋아요 토글 - 서버가 멱등 처리하므로 응답값(liked, likeCount)으로 상태를 확정한다
+  function handleToggleLike() {
+    // 비회원은 좋아요 불가 - 불필요한 요청 없이 바로 로그인 페이지로 이동
+    if (!appState.isLoggedIn) {
+      navigate('/login')
+      return
+    }
+
+    const apiCall = state.liked ? () => unlikeQuestion(id) : () => likeQuestion(id)
+
+    requestHandler(apiCall, {
+      onSuccess: (data) => dispatch({ type: QDETAIL.SET_LIKE, payload: data }),
+      fallbackMessage: '좋아요 처리에 실패했습니다.',
+      showGlobalError: true,
+    })
+  }
+
   if (state.error || !state.question) {
     return (
       <div className="main">
@@ -89,9 +117,10 @@ function QuestionDetailPage() {
     ? `\`\`\`${normalizedCodeLanguage}\n${question.code}\n\`\`\``
     : ''
 
-  // 로그인 상태이고 작성자 본인인 경우에만 수정 버튼 표시
-  // TODO: API 연동 시 question.authorId === appState.userId 로 비교
-  const isAuthor = appState.isLoggedIn && appState.email === MOCK_AUTHOR_ID
+  // 로그인 상태 + 작성자 본인인 경우에만 수정/삭제 버튼 노출 (UI 제어용 - 서버에서도 재검증)
+  const isAuthor = appState.isLoggedIn
+    && appState.userId != null
+    && appState.userId === question.writerId
 
   return (
     <div className="main">
@@ -153,19 +182,26 @@ function QuestionDetailPage() {
         <div className="detail-footer">
           <button
             className={`icon-btn ${state.liked ? 'liked' : ''}`}
-            onClick={() => dispatch({ type: QDETAIL.TOGGLE_POST_LIKE })}
+            onClick={handleToggleLike}
           >
             {state.liked ? '♥' : '♡'} 좋아요 {state.likeCount}
           </button>
           <div style={{ display: 'flex', gap: 8 }}>
-
             {isAuthor && (
-              <button
-                className="btn btn-ghost btn-sm"
-                onClick={() => navigate(`/questions/${id}/edit`)}
-              >
-                수정
-              </button>
+              <>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => navigate(`/questions/${id}/edit`)}
+                >
+                  수정
+                </button>
+                <button
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => dispatch({ type: QDETAIL.SET_DELETE_CONFIRM, payload: true })}
+                >
+                  삭제
+                </button>
+              </>
             )}
             <button className="btn btn-ghost btn-sm">답변 작성</button>
           </div>
@@ -215,6 +251,21 @@ function QuestionDetailPage() {
           </div>
         )
       })}
+
+      {/* 게시글 삭제 확인 모달 - soft delete이므로 사용자 확인 후에만 요청 */}
+      {state.deleteConfirmOpen && (
+        <ModalOverlay onClose={closeDeleteConfirm}>
+          <h3>게시글 삭제</h3>
+          <p className="danger-text">
+            정말 이 게시글을 삭제하시겠습니까?<br />
+            삭제된 게시글은 목록에서 사라지며 복구할 수 없습니다.
+          </p>
+          <div className="modal-actions">
+            <button className="btn btn-ghost" onClick={closeDeleteConfirm}>취소</button>
+            <button className="btn-danger-filled btn" onClick={handleDelete}>삭제</button>
+          </div>
+        </ModalOverlay>
+      )}
     </div>
   )
 }
